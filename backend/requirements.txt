@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+openai
+tensorflow
+duckduckgo-search

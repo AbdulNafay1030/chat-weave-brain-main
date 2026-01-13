@@ -1,0 +1,16 @@
+project_id = "cltpxruldnzbrltadnwo"
+
+[functions.create-invite-link]
+verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false
+
+[functions.chat-ai]
+verify_jwt = false
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.ask-ai]
+verify_jwt = false
