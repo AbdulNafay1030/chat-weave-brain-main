@@ -307,8 +307,13 @@ const GroupChat = ({
       
       const response = await api.askAI(prompt, context);
       
+      // Handle undefined or null response
+      if (!response || !response.content) {
+        throw new Error('Invalid response from AI service');
+      }
+      
       // Remove sources section if present (backend may add it)
-      let summaryContent = response.content;
+      let summaryContent = response.content || '';
       // Remove "Sources:" section at the end
       const sourcesIndex = summaryContent.indexOf('\n\n**Sources:**');
       if (sourcesIndex !== -1) {

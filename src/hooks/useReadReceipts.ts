@@ -16,60 +16,85 @@ export function useMessageReadReceipts(messageIds: string[]) {
   useEffect(() => {
     if (!messageIds.length) return;
 
+    // Skip if Supabase is not configured (using placeholder)
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      return;
+    }
+
     const fetchReadReceipts = async () => {
-      const { data, error } = await supabase
-        .from('message_reads')
-        .select('*')
-        .in('message_id', messageIds);
+      try {
+        const { data, error } = await supabase
+          .from('message_reads')
+          .select('*')
+          .in('message_id', messageIds);
 
-      if (error) {
-        console.error('Error fetching read receipts:', error);
-        return;
+        if (error) {
+          console.error('Error fetching read receipts:', error);
+          return;
+        }
+
+        const receiptsMap = new Map<string, ReadReceipt[]>();
+        data?.forEach((receipt) => {
+          const existing = receiptsMap.get(receipt.message_id) || [];
+          receiptsMap.set(receipt.message_id, [...existing, receipt]);
+        });
+        setReadReceipts(receiptsMap);
+      } catch (error) {
+        // Silently fail if Supabase is not configured
+        console.warn('Read receipts not available:', error);
       }
-
-      const receiptsMap = new Map<string, ReadReceipt[]>();
-      data?.forEach((receipt) => {
-        const existing = receiptsMap.get(receipt.message_id) || [];
-        receiptsMap.set(receipt.message_id, [...existing, receipt]);
-      });
-      setReadReceipts(receiptsMap);
     };
 
     fetchReadReceipts();
 
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel('message_reads_updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'message_reads',
-        },
-        (payload) => {
-          const newReceipt = payload.new as ReadReceipt;
-          if (messageIds.includes(newReceipt.message_id)) {
-            setReadReceipts((prev) => {
-              const newMap = new Map(prev);
-              const existing = newMap.get(newReceipt.message_id) || [];
-              if (!existing.some((r) => r.user_id === newReceipt.user_id)) {
-                newMap.set(newReceipt.message_id, [...existing, newReceipt]);
-              }
-              return newMap;
-            });
+    // Subscribe to realtime updates (only if Supabase is configured)
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel('message_reads_updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'message_reads',
+          },
+          (payload) => {
+            const newReceipt = payload.new as ReadReceipt;
+            if (messageIds.includes(newReceipt.message_id)) {
+              setReadReceipts((prev) => {
+                const newMap = new Map(prev);
+                const existing = newMap.get(newReceipt.message_id) || [];
+                if (!existing.some((r) => r.user_id === newReceipt.user_id)) {
+                  newMap.set(newReceipt.message_id, [...existing, newReceipt]);
+                }
+                return newMap;
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (error) {
+      // Silently fail if Supabase is not configured
+      console.warn('Read receipts subscription not available:', error);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [messageIds.join(',')]);
 
   const markAsRead = useCallback(async (messageId: string) => {
     if (!user) return;
+
+    // Skip if Supabase is not configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      return;
+    }
 
     // Check if already marked as read
     const existing = readReceipts.get(messageId);
@@ -83,11 +108,15 @@ export function useMessageReadReceipts(messageIds: string[]) {
           user_id: user.id,
         });
 
-      if (error && error.code !== '23505') { // Ignore duplicate key errors
-        console.error('Error marking message as read:', error);
+      if (error) {
+        // Ignore duplicate key errors (23505) and UUID format errors (22P02 - schema mismatch)
+        if (error.code !== '23505' && error.code !== '22P02') {
+          console.error('Error marking message as read:', error);
+        }
       }
     } catch (error) {
-      console.error('Error marking message as read:', error);
+      // Silently fail if Supabase is not configured
+      console.warn('Error marking message as read:', error);
     }
   }, [user, readReceipts]);
 
@@ -105,59 +134,85 @@ export function useSideThreadReadReceipts(messageIds: string[]) {
   useEffect(() => {
     if (!messageIds.length) return;
 
+    // Skip if Supabase is not configured (using placeholder)
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      return;
+    }
+
     const fetchReadReceipts = async () => {
-      const { data, error } = await supabase
-        .from('side_thread_message_reads')
-        .select('*')
-        .in('message_id', messageIds);
+      try {
+        const { data, error } = await supabase
+          .from('side_thread_message_reads')
+          .select('*')
+          .in('message_id', messageIds);
 
-      if (error) {
-        console.error('Error fetching side thread read receipts:', error);
-        return;
+        if (error) {
+          console.error('Error fetching side thread read receipts:', error);
+          return;
+        }
+
+        const receiptsMap = new Map<string, ReadReceipt[]>();
+        data?.forEach((receipt) => {
+          const existing = receiptsMap.get(receipt.message_id) || [];
+          receiptsMap.set(receipt.message_id, [...existing, receipt]);
+        });
+        setReadReceipts(receiptsMap);
+      } catch (error) {
+        // Silently fail if Supabase is not configured
+        console.warn('Side thread read receipts not available:', error);
       }
-
-      const receiptsMap = new Map<string, ReadReceipt[]>();
-      data?.forEach((receipt) => {
-        const existing = receiptsMap.get(receipt.message_id) || [];
-        receiptsMap.set(receipt.message_id, [...existing, receipt]);
-      });
-      setReadReceipts(receiptsMap);
     };
 
     fetchReadReceipts();
 
-    const channel = supabase
-      .channel('side_thread_message_reads_updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'side_thread_message_reads',
-        },
-        (payload) => {
-          const newReceipt = payload.new as ReadReceipt;
-          if (messageIds.includes(newReceipt.message_id)) {
-            setReadReceipts((prev) => {
-              const newMap = new Map(prev);
-              const existing = newMap.get(newReceipt.message_id) || [];
-              if (!existing.some((r) => r.user_id === newReceipt.user_id)) {
-                newMap.set(newReceipt.message_id, [...existing, newReceipt]);
-              }
-              return newMap;
-            });
+    // Subscribe to realtime updates (only if Supabase is configured)
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel('side_thread_message_reads_updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'side_thread_message_reads',
+          },
+          (payload) => {
+            const newReceipt = payload.new as ReadReceipt;
+            if (messageIds.includes(newReceipt.message_id)) {
+              setReadReceipts((prev) => {
+                const newMap = new Map(prev);
+                const existing = newMap.get(newReceipt.message_id) || [];
+                if (!existing.some((r) => r.user_id === newReceipt.user_id)) {
+                  newMap.set(newReceipt.message_id, [...existing, newReceipt]);
+                }
+                return newMap;
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (error) {
+      // Silently fail if Supabase is not configured
+      console.warn('Side thread read receipts subscription not available:', error);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [messageIds.join(',')]);
 
   const markAsRead = useCallback(async (messageId: string) => {
     if (!user) return;
+
+    // Skip if Supabase is not configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      return;
+    }
 
     const existing = readReceipts.get(messageId);
     if (existing?.some((r) => r.user_id === user.id)) return;
@@ -170,11 +225,18 @@ export function useSideThreadReadReceipts(messageIds: string[]) {
           user_id: user.id,
         });
 
-      if (error && error.code !== '23505') {
-        console.error('Error marking side thread message as read:', error);
+
+        
+
+      if (error) {
+        // Ignore duplicate key errors (23505) and UUID format errors (22P02 - schema mismatch)
+        if (error.code !== '23505' && error.code !== '22P02') {
+          console.error('Error marking side thread message as read:', error);
+        }
       }
     } catch (error) {
-      console.error('Error marking side thread message as read:', error);
+      // Silently fail if Supabase is not configured
+      console.warn('Error marking side thread message as read:', error);
     }
   }, [user, readReceipts]);
 
@@ -184,3 +246,4 @@ export function useSideThreadReadReceipts(messageIds: string[]) {
 
   return { readReceipts, markAsRead, getReadBy };
 }
+
