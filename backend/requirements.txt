@@ -7,4 +7,5 @@ python-dotenv
 openai
 tensorflow
 duckduckgo-search
+
 gunicorn

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 import type { Message } from '@/services/api';
@@ -11,6 +11,12 @@ export const useUnreadCount = (groupIds: string[]) => {
   const { user } = useAuth();
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
   const [lastReadTimestamps, setLastReadTimestamps] = useState<{ [key: string]: Date }>({});
+  const lastReadTimestampsRef = useRef<{ [key: string]: Date }>({});
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    lastReadTimestampsRef.current = lastReadTimestamps;
+  }, [lastReadTimestamps]);
 
   // Load last read timestamps from localStorage
   useEffect(() => {
@@ -25,6 +31,7 @@ export const useUnreadCount = (groupIds: string[]) => {
           converted[key] = new Date(val as string);
         });
         setLastReadTimestamps(converted);
+        lastReadTimestampsRef.current = converted;
       } catch (e) {
         console.error('Failed to parse stored timestamps:', e);
       }
@@ -40,7 +47,8 @@ export const useUnreadCount = (groupIds: string[]) => {
       
       for (const groupId of groupIds) {
         try {
-          const lastRead = lastReadTimestamps[groupId] || new Date(0);
+          // Use ref to get latest timestamps without causing re-runs
+          const lastRead = lastReadTimestampsRef.current[groupId] || new Date(0);
           const messages = await api.getMessages(groupId);
           
           // Count messages that are:
@@ -64,10 +72,10 @@ export const useUnreadCount = (groupIds: string[]) => {
     // Fetch immediately
     fetchUnreadCounts();
 
-    // Poll every 5 seconds to update unread counts
-    const interval = setInterval(fetchUnreadCounts, 5000);
+    // Poll every 10 seconds to update unread counts (increased from 5 to reduce load)
+    const interval = setInterval(fetchUnreadCounts, 10000);
     return () => clearInterval(interval);
-  }, [user, groupIds, lastReadTimestamps]);
+  }, [user, groupIds]);
 
   // Mark as read
   const markAsRead = useCallback((groupId: string) => {

@@ -72,6 +72,7 @@ const AppShell = () => {
       members: g.members || [],
       createdAt: g.createdAt || new Date(),
       ownerId: (g as any).owner_id || g.ownerId,
+      type: (g as any).type || 'group', // Preserve type property, default to 'group'
     }));
   }, [dbGroups]);
 
