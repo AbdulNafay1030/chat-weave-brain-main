@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/services/api';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export interface DbSideThread {
   id: string;
   group_id: string;
@@ -53,7 +55,7 @@ export function useSideThreads(groupId: string | null) {
     try {
       // In a real app, we might filter by created_by as well for "private" threads
       // but for now, we'll just fetch all threads for the group
-      const response = await fetch(`http://localhost:8000/threads?group_id=${groupId}`);
+      const response = await fetch(`${API_URL}/threads?group_id=${groupId}`);
       if (response.ok) {
         const data = await response.json();
         setThreads(data);
@@ -77,7 +79,7 @@ export function useSideThreads(groupId: string | null) {
     formData.append('group_id', groupId);
     formData.append('created_by', user.id);
 
-    const response = await fetch('http://localhost:8000/threads', {
+    const response = await fetch(`${API_URL}/threads`, {
       method: 'POST',
       body: formData
     });
@@ -96,7 +98,7 @@ export function useSideThreads(groupId: string | null) {
       // Since I added it to api.ts, I should be able to use it if I update the import or use fetch
       // Let's use fetch for safety if api interface isn't fully propagated yet in this file content view context (though I edited it)
       // Actually, I can just use fetch here to be sure.
-      const response = await fetch(`http://localhost:8000/threads/${threadId}`, { method: 'DELETE' });
+      const response = await fetch(`${API_URL}/threads/${threadId}`, { method: 'DELETE' });
       if (response.ok) {
         setThreads(prev => prev.filter(t => t.id !== threadId));
         toast({ title: 'Thread deleted' });
@@ -140,7 +142,7 @@ export function useSideThreadMessages(threadId: string | null) {
     }
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/messages?thread_id=${threadId}`);
+      const response = await fetch(`${API_URL}/messages?thread_id=${threadId}`);
       if (response.ok) {
         const data = await response.json();
         setMessages(data);
@@ -172,7 +174,7 @@ export function useSideThreadMessages(threadId: string | null) {
     // But backend endpoint expects 'thread_id'
     formData.append('thread_id', threadId);
 
-    await fetch('http://localhost:8000/messages', {
+    await fetch(`${API_URL}/messages`, {
       method: 'POST',
       body: formData
     });
