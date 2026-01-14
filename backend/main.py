@@ -240,7 +240,7 @@ class Thread(BaseModel):
 
 class AskAIRequest(BaseModel):
     question: str
-    chatContext: str
+    chatContext: Optional[str] = ""
 
 class AcceptInviteRequest(BaseModel):
     token: str
