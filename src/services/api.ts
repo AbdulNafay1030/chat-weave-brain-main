@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const FALLBACK_RENDER_URL = 'https://chat-weave-brain-main-vwzy.onrender.com';
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? FALLBACK_RENDER_URL : 'http://localhost:8000');
 
 export interface User {
     id: string;
