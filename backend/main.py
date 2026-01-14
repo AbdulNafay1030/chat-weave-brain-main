@@ -1277,13 +1277,8 @@ When you have access to web search results or URLs, always cite your sources cle
         if not client:
             return {"content": "Error: OpenAI API key not configured. Please set OPENAI_API_KEY in your .env file."}
         
-            # Check if OpenAI client is configured
-            if not client:
-                yield f"data: {json.dumps({'error': 'OpenAI API key not configured'})}\n\n"
-                return
-            
-            # Use the latest GPT-4 model
-            response = client.chat.completions.create(
+        # Use the latest GPT-4 model
+        response = client.chat.completions.create(
             model="gpt-4o",  # Latest GPT-4 model
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -1397,6 +1392,11 @@ When you have access to web search results or URLs, always cite your sources cle
                         system_prompt += "\n\nYou have been provided with the latest web search results. Use this current information to answer the question comprehensively. Always cite your sources using the format [Source Name](URL) or mention sources naturally (e.g., 'According to [Source Name]...'). Include multiple sources when relevant."
                 except Exception as e:
                     print(f"Search failed: {e}")
+
+            # Check if OpenAI client is configured
+            if not client:
+                yield "Error: OpenAI API key not configured. Please set OPENAI_API_KEY in your .env file."
+                return
 
             stream = client.chat.completions.create(
                 model="gpt-4o",  # Latest GPT-4 model

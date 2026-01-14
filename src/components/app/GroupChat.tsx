@@ -303,9 +303,9 @@ const GroupChat = ({
       }).join('\n');
 
       // Call AI to summarize
-      const prompt = `Summarize the following group chat messages into key discussion points. Format the summary as numbered points (1., 2., 3., etc.). Do not include sources or citations. Keep it concise but informative.`;
+      const prompt = `Summarize the following group chat messages into key discussion points. Format the summary as numbered points (1., 2., 3., etc.). Do not include sources or citations. Keep it concise but informative.\n\n${context}`;
       
-      const response = await api.askAI(prompt, context);
+      const response = await api.askAI(prompt);
       
       // Handle undefined or null response
       if (!response || !response.content) {
