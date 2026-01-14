@@ -7,7 +7,7 @@ import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIco
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
-import InviteMemberModal from './InviteMemberModal';
+import InviteGroupModal from './InviteGroupModal';
 import TypingIndicator from './TypingIndicator';
 import MessageSearch from './MessageSearch';
 import ForwardMessageModal from './ForwardMessageModal';
@@ -502,10 +502,11 @@ const GroupChat = ({
 
       {/* Invite Modal */}
       {groupId && (
-        <InviteMemberModal
+        <InviteGroupModal
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
           groupId={groupId}
+          userId={currentUserId}
           groupName={group.name}
         />
       )}
