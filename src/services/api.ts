@@ -151,16 +151,28 @@ export const api = {
     },
 
     async sendInvitationEmail(emails: string[], subject: string, body: string, inviteLink: string): Promise<{ results: Array<{ email: string; status: string; error?: string }>; sent: number }> {
-        const res = await fetch(`${API_URL}/invitations/send-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emails, subject, body, invite_link: inviteLink })
-        });
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || 'Failed to send emails');
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+        try {
+            const res = await fetch(`${API_URL}/invitations/send-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emails, subject, body, invite_link: inviteLink }),
+                signal: controller.signal,
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Failed to send emails');
+            }
+            return res.json();
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                throw new Error('Email request timed out. Please try again.');
+            }
+            throw error;
+        } finally {
+            window.clearTimeout(timeoutId);
         }
-        return res.json();
     },
 
     async acceptInvitation(token: string, userId: string): Promise<{ success: boolean; groupId?: string; groupName?: string; error?: string }> {

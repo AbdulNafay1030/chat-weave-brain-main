@@ -1037,7 +1037,7 @@ def send_invitation_email(data: SendEmailRequest):
                 
                 # Send via SMTP
                 try:
-                    with smtplib.SMTP(smtp_server, smtp_port) as server:
+                    with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
                         server.starttls()
                         server.login(smtp_user, smtp_password)
                         server.send_message(msg)
