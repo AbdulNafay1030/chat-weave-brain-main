@@ -900,6 +900,41 @@ class SendEmailRequest(BaseModel):
     body: str
     invite_link: str
 
+@app.get("/email-config")
+def email_config_status():
+    """
+    Returns which email provider is configured (no secrets).
+    Useful for verifying Render env vars after deploy.
+    """
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_from_email = os.getenv("SMTP_FROM_EMAIL", smtp_user)
+
+    resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
+    resend_from_email = os.getenv("RESEND_FROM_EMAIL", "Onboarding <onboarding@resend.dev>")
+
+    use_smtp = bool(smtp_server and smtp_user and smtp_password)
+    use_resend = bool(resend_api_key and resend_api_key != "")
+
+    provider = "smtp" if use_smtp else ("resend" if use_resend else "none")
+
+    return {
+        "provider": provider,
+        "smtp": {
+            "configured": use_smtp,
+            "server": smtp_server,
+            "port": smtp_port,
+            "user_set": bool(smtp_user),
+            "from_email": smtp_from_email,
+        },
+        "resend": {
+            "configured": use_resend,
+            "from_email": resend_from_email,
+        },
+    }
+
 @app.post("/invitations/send-email")
 def send_invitation_email(data: SendEmailRequest):
     """
