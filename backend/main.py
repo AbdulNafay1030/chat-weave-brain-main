@@ -900,6 +900,11 @@ class SendEmailRequest(BaseModel):
     body: str
     invite_link: str
 
+class EmailTestRequest(BaseModel):
+    to_email: str
+    subject: Optional[str] = "Sidechat SMTP Test"
+    body: Optional[str] = "This is a test email from Sidechat."
+
 @app.get("/email-config")
 def email_config_status():
     """
@@ -934,6 +939,101 @@ def email_config_status():
             "from_email": resend_from_email,
         },
     }
+
+@app.post("/email-test")
+def send_test_email(data: EmailTestRequest):
+    """
+    Sends a test email to verify SMTP/Resend configuration.
+    Returns provider and detailed status (no secrets).
+    """
+    # SMTP Configuration
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_from_email = os.getenv("SMTP_FROM_EMAIL", smtp_user)
+
+    # Resend API Configuration (fallback)
+    resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
+
+    use_smtp = smtp_server and smtp_user and smtp_password
+    use_resend = resend_api_key and resend_api_key != ""
+
+    if not use_smtp and not use_resend:
+        return {
+            "provider": "none",
+            "status": "error",
+            "error": "No email service configured. Set SMTP credentials or RESEND_API_KEY.",
+        }
+
+    if use_smtp:
+        # SMTP send
+        msg = MIMEMultipart('alternative')
+        msg['From'] = smtp_from_email
+        msg['To'] = data.to_email
+        msg['Subject'] = data.subject or "Sidechat SMTP Test"
+
+        text_part = MIMEText(data.body or "This is a test email from Sidechat.", 'plain')
+        html_part = MIMEText(f"<p>{(data.body or 'This is a test email from Sidechat.').replace(chr(10), '<br>')}</p>", 'html')
+        msg.attach(text_part)
+        msg.attach(html_part)
+
+        try:
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.send_message(msg)
+            return {
+                "provider": "smtp",
+                "status": "success",
+                "to": data.to_email,
+                "from": smtp_from_email,
+            }
+        except smtplib.SMTPAuthenticationError as e:
+            return {
+                "provider": "smtp",
+                "status": "error",
+                "error": f"SMTP Authentication failed: {str(e)}",
+            }
+        except smtplib.SMTPException as e:
+            return {
+                "provider": "smtp",
+                "status": "error",
+                "error": f"SMTP Error: {str(e)}",
+            }
+        except Exception as e:
+            return {
+                "provider": "smtp",
+                "status": "error",
+                "error": f"Connection error: {str(e)}",
+            }
+
+    # Resend fallback
+    resend_url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {resend_api_key}",
+        "Content-Type": "application/json"
+    }
+    from_email = os.getenv("RESEND_FROM_EMAIL", "Onboarding <onboarding@resend.dev>")
+    payload = {
+        "from": from_email,
+        "to": [data.to_email],
+        "subject": data.subject or "Sidechat SMTP Test",
+        "html": f"<p>{(data.body or 'This is a test email from Sidechat.').replace(chr(10), '<br>')}</p>",
+    }
+
+    try:
+        response = requests.post(resend_url, json=payload, headers=headers, timeout=10)
+        if response.status_code == 200:
+            return {"provider": "resend", "status": "success", "to": data.to_email, "from": from_email}
+        try:
+            error_data = response.json()
+            error_msg = error_data.get('message', str(error_data))
+        except Exception:
+            error_msg = response.text or f"HTTP {response.status_code}"
+        return {"provider": "resend", "status": "error", "error": error_msg}
+    except Exception as e:
+        return {"provider": "resend", "status": "error", "error": str(e)}
 
 @app.post("/invitations/send-email")
 def send_invitation_email(data: SendEmailRequest):
