@@ -106,7 +106,8 @@ const InviteGroupModal = ({ isOpen, onClose, groupId, userId, groupName, onInvit
         setLoading(true);
         try {
             const data = await api.createInvitation(groupId, userId);
-            const fullLink = `${window.location.origin}/invite/${data.token}`;
+            const appBaseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+            const fullLink = `${appBaseUrl}/invite/${data.token}`;
             setLink(fullLink);
         } catch (error) {
             console.error(error);

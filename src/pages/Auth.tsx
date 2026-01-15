@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import SidechatLogo from '@/components/SidechatLogo';
 
@@ -18,7 +19,7 @@ const nameSchema = z.string().min(1, 'Name is required').max(100, 'Name is too l
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, signUp, signIn, signInWithGoogle } = useAuth();
+  const { user, signUp, signIn, signInWithGoogle, forgotPassword } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -28,6 +29,9 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -120,6 +124,37 @@ const Auth = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) {
+      toast({
+        title: 'Email required',
+        description: 'Please enter your email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsForgotLoading(true);
+    try {
+      const { error } = await forgotPassword(forgotEmail.trim());
+      if (error) {
+        toast({
+          title: 'Request failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Check your email',
+          description: 'If the email exists, a reset link has been sent.',
+        });
+        setIsForgotOpen(false);
+        setForgotEmail('');
+      }
+    } finally {
+      setIsForgotLoading(false);
     }
   };
 
@@ -316,6 +351,20 @@ const Auth = () => {
               {errors.password && (
                 <p className="text-sm text-destructive mt-1">{errors.password}</p>
               )}
+              {!isSignUp && (
+                <div className="flex justify-end mt-1">
+                  <button
+                    type="button"
+                    className="text-sm text-primary hover:underline"
+                    onClick={() => {
+                      setForgotEmail(email);
+                      setIsForgotOpen(true);
+                    }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
             </div>
 
             <Button
@@ -333,6 +382,36 @@ const Auth = () => {
               )}
             </Button>
           </form>
+
+          <Dialog open={isForgotOpen} onOpenChange={setIsForgotOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Reset your password</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                />
+                <Button
+                  onClick={handleForgotPassword}
+                  className="w-full"
+                  disabled={isForgotLoading}
+                >
+                  {isForgotLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send reset link'
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}

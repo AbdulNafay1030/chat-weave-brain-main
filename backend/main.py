@@ -9,7 +9,7 @@ import uuid
 import os
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import tensorflow as tf
 from openai import OpenAI
 import requests
@@ -157,6 +157,17 @@ def init_db():
         created_by TEXT,
         created_at TEXT,
         expires_at TEXT
+    )
+    ''')
+
+    # Password reset tokens
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS password_resets (
+        id TEXT PRIMARY KEY,
+        email TEXT,
+        token TEXT UNIQUE,
+        expires_at TEXT,
+        used_at TEXT
     )
     ''')
 
@@ -431,6 +442,10 @@ class GoogleAuth(BaseModel):
     google_id: str
     mode: str = "login"
 
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 # --- Auth Endpoints ---
 @app.post("/auth/register")
 def register(data: AuthRegister):
@@ -549,9 +564,70 @@ def google_auth(data: GoogleAuth):
 
 @app.post("/auth/forgot-password")
 def forgot_password(email: str = Form(...)):
-    # Mock sending email
-    print(f"PASSWORD RESET LINK SENT TO: {email}")
-    return {"status": "success", "message": "Reset link sent (check console)"}
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Always respond success to avoid account enumeration
+    cursor.execute("SELECT email FROM users WHERE email = ?", (email,))
+    user_row = cursor.fetchone()
+    if not user_row:
+        conn.close()
+        return {"status": "success", "message": "If the email exists, a reset link has been sent."}
+
+    # Create reset token
+    token = str(uuid.uuid4())
+    expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+    reset_id = str(uuid.uuid4())
+    cursor.execute(
+        "INSERT INTO password_resets VALUES (?, ?, ?, ?, ?)",
+        (reset_id, email, token, expires_at, None)
+    )
+    conn.commit()
+    conn.close()
+
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    reset_link = f"{frontend_url}/reset-password?token={token}"
+
+    subject = "Reset your Sidechat password"
+    text_body = f"Use this link to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour."
+    html_body = f"""
+    <p>Use this link to reset your password:</p>
+    <p><a href="{reset_link}">{reset_link}</a></p>
+    <p>This link expires in 1 hour.</p>
+    """
+
+    result = send_email_message(email, subject, text_body, html_body)
+    if result.get("status") != "success":
+        raise HTTPException(status_code=500, detail=result.get("error", "Failed to send reset email"))
+
+    return {"status": "success", "message": "If the email exists, a reset link has been sent."}
+
+@app.post("/auth/reset-password")
+def reset_password(data: ResetPasswordRequest):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM password_resets WHERE token = ? AND used_at IS NULL",
+        (data.token,)
+    )
+    reset_row = cursor.fetchone()
+    if not reset_row:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    expires_at = reset_row["expires_at"]
+    if expires_at and datetime.fromisoformat(expires_at) < datetime.utcnow():
+        conn.close()
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+
+    email = reset_row["email"]
+    cursor.execute("UPDATE users SET password = ? WHERE email = ?", (data.new_password, email))
+    cursor.execute("UPDATE password_resets SET used_at = ? WHERE token = ?", (datetime.utcnow().isoformat(), data.token))
+    conn.commit()
+    conn.close()
+
+    return {"status": "success"}
 @app.get("/messages")
 def get_messages(group_id: Optional[str] = None, thread_id: Optional[str] = None):
     conn = get_db()
@@ -905,6 +981,70 @@ class EmailTestRequest(BaseModel):
     subject: Optional[str] = "Sidechat SMTP Test"
     body: Optional[str] = "This is a test email from Sidechat."
 
+def send_email_message(to_email: str, subject: str, text_body: str, html_body: str) -> dict:
+    """
+    Send a single email using SMTP (preferred) with Resend fallback.
+    Returns dict with status/provider/error.
+    """
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_from_email = os.getenv("SMTP_FROM_EMAIL", smtp_user)
+
+    resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
+    use_smtp = bool(smtp_server and smtp_user and smtp_password)
+    use_resend = bool(resend_api_key and resend_api_key != "")
+
+    if not use_smtp and not use_resend:
+        return {"status": "error", "provider": "none", "error": "No email service configured"}
+
+    if use_smtp:
+        msg = MIMEMultipart('alternative')
+        msg['From'] = smtp_from_email
+        msg['To'] = to_email
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+
+        try:
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.send_message(msg)
+            return {"status": "success", "provider": "smtp"}
+        except Exception as e:
+            if not use_resend:
+                return {"status": "error", "provider": "smtp", "error": f"SMTP failed: {str(e)}"}
+
+    # Resend fallback
+    resend_url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {resend_api_key}",
+        "Content-Type": "application/json"
+    }
+    from_email = os.getenv("RESEND_FROM_EMAIL", "Onboarding <onboarding@resend.dev>")
+    payload = {
+        "from": from_email,
+        "to": [to_email],
+        "subject": subject,
+        "html": html_body
+    }
+
+    try:
+        response = requests.post(resend_url, json=payload, headers=headers, timeout=10)
+        if response.status_code == 200:
+            return {"status": "success", "provider": "resend"}
+        try:
+            error_data = response.json()
+            error_msg = error_data.get('message', str(error_data))
+        except Exception:
+            error_msg = response.text or f"HTTP {response.status_code}"
+        return {"status": "error", "provider": "resend", "error": error_msg}
+    except Exception as e:
+        return {"status": "error", "provider": "resend", "error": str(e)}
+
 @app.get("/email-config")
 def email_config_status():
     """
@@ -1121,7 +1261,7 @@ def send_invitation_email(data: SendEmailRequest):
                 </body>
                 </html>
                 """
-                
+
                 # Create message
                 msg = MIMEMultipart('alternative')
                 msg['From'] = smtp_from_email
@@ -1143,22 +1283,17 @@ def send_invitation_email(data: SendEmailRequest):
                         server.send_message(msg)
                     
                     print(f"✓ Email sent successfully via SMTP to {email}")
-                    results.append({"email": email, "status": "success"})
-                except smtplib.SMTPAuthenticationError as e:
-                    error_msg = f"SMTP Authentication failed: {str(e)}"
-                    print(f"✗ {error_msg}")
-                    results.append({"email": email, "status": "error", "error": error_msg})
-                except smtplib.SMTPException as e:
-                    error_msg = f"SMTP Error: {str(e)}"
-                    print(f"✗ {error_msg}")
-                    results.append({"email": email, "status": "error", "error": error_msg})
+                    results.append({"email": email, "status": "success", "provider": "smtp"})
+                    continue
                 except Exception as e:
-                    error_msg = f"Connection error: {str(e)}"
+                    error_msg = f"SMTP failed: {str(e)}"
                     print(f"✗ {error_msg}")
-                    results.append({"email": email, "status": "error", "error": error_msg})
-                    
-            elif use_resend:
-                # Use Resend API to send emails
+                    if not use_resend:
+                        results.append({"email": email, "status": "error", "error": error_msg})
+                        continue
+
+            if use_resend:
+                # Use Resend API to send emails (fallback or primary)
                 html_body = f"""
                 <!DOCTYPE html>
                 <html>
@@ -1193,7 +1328,6 @@ def send_invitation_email(data: SendEmailRequest):
                 </body>
                 </html>
                 """
-                
                 resend_url = "https://api.resend.com/emails"
                 headers = {
                     "Authorization": f"Bearer {resend_api_key}",
@@ -1224,7 +1358,7 @@ def send_invitation_email(data: SendEmailRequest):
                     response_data = response.json()
                     print(f"✓ Email sent successfully to {email}")
                     print(f"Email ID: {response_data.get('id', 'N/A')}")
-                    results.append({"email": email, "status": "success"})
+                    results.append({"email": email, "status": "success", "provider": "resend"})
                 elif response.status_code == 403:
                     # 403 usually means domain not verified or using onboarding@resend.dev with real email
                     try:

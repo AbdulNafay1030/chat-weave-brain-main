@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Group } from '@/types/sidechat';
 import { cn } from '@/lib/utils';
@@ -73,6 +74,7 @@ const GroupSidebar = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isGroupsOpen, setIsGroupsOpen] = useState(true);
   const [isDMsOpen, setIsDMsOpen] = useState(true);
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { isMuted, toggleMute } = useMuteChat();
   
@@ -104,9 +106,16 @@ const GroupSidebar = ({
     <div className="w-[260px] h-full bg-sidebar flex flex-col font-sans text-sm border-r border-sidebar-border text-sidebar-foreground">
       {/* Top Header Section */}
       <div className="p-3 pb-0 space-y-4">
-        <div className="px-2">
+        <button
+          type="button"
+          className="px-2 text-left"
+          onClick={() => {
+            window.location.href = `${window.location.origin}/`;
+          }}
+          aria-label="Go to landing page"
+        >
           <SidechatLogo size="sm" />
-        </div>
+        </button>
 
         <div className="px-1">
           <div className="relative">

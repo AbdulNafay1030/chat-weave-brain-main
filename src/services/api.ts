@@ -276,7 +276,29 @@ export const api = {
     async forgotPassword(email: string): Promise<void> {
         const formData = new FormData();
         formData.append("email", email);
-        await fetch(`${API_URL}/auth/forgot-password`, { method: 'POST', body: formData });
+        const res = await fetch(`${API_URL}/auth/forgot-password`, { method: 'POST', body: formData });
+        if (!res.ok) {
+            let message = 'Failed to request password reset';
+            try {
+                const err = await res.json();
+                message = err.detail || message;
+            } catch {
+                // ignore parsing error
+            }
+            throw new Error(message);
+        }
+    },
+
+    async resetPassword(token: string, newPassword: string): Promise<void> {
+        const res = await fetch(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, new_password: newPassword })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Failed to reset password');
+        }
     },
 
     async createDM(user1Id: string, user2Id: string): Promise<Group> {
