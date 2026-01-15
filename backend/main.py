@@ -677,7 +677,8 @@ def gmail_oauth_callback(code: str):
     }
     response = requests.post(token_url, data=payload, timeout=10)
     if response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Failed to exchange code for tokens")
+        error_detail = response.text
+        raise HTTPException(status_code=400, detail=f"Failed to exchange code for tokens: {error_detail}")
 
     data = response.json()
     access_token = data.get("access_token")
@@ -1207,13 +1208,14 @@ def email_config_status():
 
     resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
     gmail_sender = os.getenv("GMAIL_SENDER_EMAIL")
-    gmail_ready = bool(gmail_sender and get_gmail_tokens() and get_gmail_tokens().get("refresh_token"))
+    gmail_tokens = get_gmail_tokens()
+    gmail_ready = bool(gmail_sender and gmail_tokens and gmail_tokens.get("refresh_token"))
     resend_from_email = os.getenv("RESEND_FROM_EMAIL", "Onboarding <onboarding@resend.dev>")
 
     use_smtp = bool(smtp_server and smtp_user and smtp_password)
     use_resend = bool(resend_api_key and resend_api_key != "")
 
-    provider = "smtp" if use_smtp else ("resend" if use_resend else "none")
+    provider = "gmail" if gmail_ready else ("smtp" if use_smtp else ("resend" if use_resend else "none"))
 
     return {
         "provider": provider,
