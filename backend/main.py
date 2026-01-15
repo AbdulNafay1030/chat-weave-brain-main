@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 import tensorflow as tf
 from openai import OpenAI
 import requests
+import base64
+import urllib.parse
 from bs4 import BeautifulSoup
 import re
 from duckduckgo_search import DDGS
@@ -168,6 +170,16 @@ def init_db():
         token TEXT UNIQUE,
         expires_at TEXT,
         used_at TEXT
+    )
+    ''')
+
+    # Gmail OAuth tokens (single row)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS gmail_tokens (
+        id INTEGER PRIMARY KEY,
+        access_token TEXT,
+        refresh_token TEXT,
+        expires_at TEXT
     )
     ''')
 
@@ -628,6 +640,57 @@ def reset_password(data: ResetPasswordRequest):
     conn.close()
 
     return {"status": "success"}
+
+@app.get("/google/oauth/start")
+def gmail_oauth_start():
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    if not client_id or not redirect_uri:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured")
+
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "https://www.googleapis.com/auth/gmail.send",
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+    return {"url": auth_url}
+
+@app.get("/google/oauth/callback")
+def gmail_oauth_callback(code: str):
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    if not client_id or not client_secret or not redirect_uri:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured")
+
+    token_url = "https://oauth2.googleapis.com/token"
+    payload = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "grant_type": "authorization_code",
+        "redirect_uri": redirect_uri,
+    }
+    response = requests.post(token_url, data=payload, timeout=10)
+    if response.status_code != 200:
+        raise HTTPException(status_code=400, detail="Failed to exchange code for tokens")
+
+    data = response.json()
+    access_token = data.get("access_token")
+    refresh_token = data.get("refresh_token")
+    expires_in = data.get("expires_in")
+
+    if not access_token:
+        raise HTTPException(status_code=400, detail="Missing access token")
+
+    save_gmail_tokens(access_token, refresh_token, expires_in)
+
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    return {"status": "success", "redirect": f"{frontend_url}/app?gmail=connected"}
 @app.get("/messages")
 def get_messages(group_id: Optional[str] = None, thread_id: Optional[str] = None):
     conn = get_db()
@@ -981,6 +1044,64 @@ class EmailTestRequest(BaseModel):
     subject: Optional[str] = "Sidechat SMTP Test"
     body: Optional[str] = "This is a test email from Sidechat."
 
+def get_gmail_tokens():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM gmail_tokens WHERE id = 1")
+    row = cursor.fetchone()
+    conn.close()
+    return row_to_dict(row) if row else None
+
+def save_gmail_tokens(access_token: str, refresh_token: Optional[str], expires_in: Optional[int]):
+    expires_at = None
+    if expires_in:
+        expires_at = (datetime.utcnow() + timedelta(seconds=int(expires_in))).isoformat()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, refresh_token FROM gmail_tokens WHERE id = 1")
+    existing = cursor.fetchone()
+    if existing:
+        existing_refresh = existing["refresh_token"]
+        cursor.execute(
+            "UPDATE gmail_tokens SET access_token = ?, refresh_token = ?, expires_at = ? WHERE id = 1",
+            (access_token, refresh_token or existing_refresh, expires_at)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO gmail_tokens (id, access_token, refresh_token, expires_at) VALUES (?, ?, ?, ?)",
+            (1, access_token, refresh_token, expires_at)
+        )
+    conn.commit()
+    conn.close()
+
+def gmail_access_token() -> Optional[str]:
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        return None
+
+    tokens = get_gmail_tokens()
+    if not tokens or not tokens.get("refresh_token"):
+        return None
+
+    # Refresh access token
+    token_url = "https://oauth2.googleapis.com/token"
+    payload = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": tokens["refresh_token"],
+        "grant_type": "refresh_token",
+    }
+    response = requests.post(token_url, data=payload, timeout=10)
+    if response.status_code != 200:
+        return None
+    data = response.json()
+    access_token = data.get("access_token")
+    expires_in = data.get("expires_in")
+    if access_token:
+        save_gmail_tokens(access_token, None, expires_in)
+    return access_token
+
 def send_email_message(to_email: str, subject: str, text_body: str, html_body: str) -> dict:
     """
     Send a single email using SMTP (preferred) with Resend fallback.
@@ -993,11 +1114,38 @@ def send_email_message(to_email: str, subject: str, text_body: str, html_body: s
     smtp_from_email = os.getenv("SMTP_FROM_EMAIL", smtp_user)
 
     resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
+    gmail_sender = os.getenv("GMAIL_SENDER_EMAIL")
+    gmail_token = gmail_access_token()
     use_smtp = bool(smtp_server and smtp_user and smtp_password)
     use_resend = bool(resend_api_key and resend_api_key != "")
+    use_gmail = bool(gmail_token and gmail_sender)
 
-    if not use_smtp and not use_resend:
+    if not use_gmail and not use_smtp and not use_resend:
         return {"status": "error", "provider": "none", "error": "No email service configured"}
+
+    if use_gmail:
+        try:
+            raw_message = MIMEMultipart('alternative')
+            raw_message['To'] = to_email
+            raw_message['From'] = gmail_sender
+            raw_message['Subject'] = subject
+            raw_message.attach(MIMEText(text_body, 'plain'))
+            raw_message.attach(MIMEText(html_body, 'html'))
+
+            encoded_message = base64.urlsafe_b64encode(raw_message.as_bytes()).decode()
+            gmail_url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+            headers = {
+                "Authorization": f"Bearer {gmail_token}",
+                "Content-Type": "application/json",
+            }
+            payload = {"raw": encoded_message}
+            response = requests.post(gmail_url, json=payload, headers=headers, timeout=10)
+            if response.status_code in (200, 202):
+                return {"status": "success", "provider": "gmail"}
+        except Exception as e:
+            # Fall through to SMTP/Resend if configured
+            if not use_smtp and not use_resend:
+                return {"status": "error", "provider": "gmail", "error": f"Gmail API failed: {str(e)}"}
 
     if use_smtp:
         msg = MIMEMultipart('alternative')
@@ -1058,6 +1206,8 @@ def email_config_status():
     smtp_from_email = os.getenv("SMTP_FROM_EMAIL", smtp_user)
 
     resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
+    gmail_sender = os.getenv("GMAIL_SENDER_EMAIL")
+    gmail_ready = bool(gmail_sender and get_gmail_tokens() and get_gmail_tokens().get("refresh_token"))
     resend_from_email = os.getenv("RESEND_FROM_EMAIL", "Onboarding <onboarding@resend.dev>")
 
     use_smtp = bool(smtp_server and smtp_user and smtp_password)
@@ -1067,6 +1217,10 @@ def email_config_status():
 
     return {
         "provider": provider,
+        "gmail": {
+            "configured": gmail_ready,
+            "sender": gmail_sender,
+        },
         "smtp": {
             "configured": use_smtp,
             "server": smtp_server,
@@ -1098,13 +1252,44 @@ def send_test_email(data: EmailTestRequest):
 
     use_smtp = smtp_server and smtp_user and smtp_password
     use_resend = resend_api_key and resend_api_key != ""
+    gmail_sender = os.getenv("GMAIL_SENDER_EMAIL")
+    gmail_token = gmail_access_token()
+    use_gmail = bool(gmail_sender and gmail_token)
 
-    if not use_smtp and not use_resend:
+    if not use_gmail and not use_smtp and not use_resend:
         return {
             "provider": "none",
             "status": "error",
             "error": "No email service configured. Set SMTP credentials or RESEND_API_KEY.",
         }
+
+    if use_gmail:
+        try:
+            raw_message = MIMEMultipart('alternative')
+            raw_message['To'] = data.to_email
+            raw_message['From'] = gmail_sender
+            raw_message['Subject'] = data.subject or "Sidechat Gmail Test"
+            raw_message.attach(MIMEText(data.body or "This is a test email from Sidechat.", 'plain'))
+            raw_message.attach(MIMEText(f"<p>{(data.body or 'This is a test email from Sidechat.').replace(chr(10), '<br>')}</p>", 'html'))
+
+            encoded_message = base64.urlsafe_b64encode(raw_message.as_bytes()).decode()
+            gmail_url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+            headers = {
+                "Authorization": f"Bearer {gmail_token}",
+                "Content-Type": "application/json",
+            }
+            payload = {"raw": encoded_message}
+            response = requests.post(gmail_url, json=payload, headers=headers, timeout=10)
+            if response.status_code in (200, 202):
+                return {
+                    "provider": "gmail",
+                    "status": "success",
+                    "to": data.to_email,
+                    "from": gmail_sender,
+                }
+        except Exception as e:
+            if not use_smtp and not use_resend:
+                return {"provider": "gmail", "status": "error", "error": str(e)}
 
     if use_smtp:
         # SMTP send
