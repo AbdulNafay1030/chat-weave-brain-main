@@ -1366,217 +1366,55 @@ def send_test_email(data: EmailTestRequest):
 def send_invitation_email(data: SendEmailRequest):
     """
     Send invitation emails to multiple recipients.
-    Supports both SMTP and Resend API.
-    
-    SMTP Configuration (Recommended):
-    - SMTP_SERVER (e.g., "smtp.gmail.com")
-    - SMTP_PORT (default: 587)
-    - SMTP_USER (your email)
-    - SMTP_PASSWORD (your email password or app password)
-    - SMTP_FROM_EMAIL (optional, defaults to SMTP_USER)
-    
-    Resend API Configuration:
-    - RESEND_API_KEY
-    - RESEND_FROM_EMAIL (optional, defaults to onboarding@resend.dev)
+    Uses Gmail API (if configured), otherwise SMTP/Resend fallback.
     """
     results = []
-    
-    # SMTP Configuration (checked first - more reliable)
-    smtp_server = os.getenv("SMTP_SERVER")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_from_email = os.getenv("SMTP_FROM_EMAIL", smtp_user)  # Can be different from login
-    
-    # Resend API Configuration (fallback)
-    resend_api_key = os.getenv("RESEND_API_KEY", RESEND_API_KEY)
-    
-    use_smtp = smtp_server and smtp_user and smtp_password
-    use_resend = resend_api_key and resend_api_key != ""  # Use Resend if API key is provided
-    
-    if not use_smtp and not use_resend:
-        error_msg = "No email service configured. Set SMTP credentials (SMTP_SERVER, SMTP_USER, SMTP_PASSWORD) or RESEND_API_KEY"
-        print(f"ERROR: {error_msg}")
-        return {
-            "results": [{"email": email, "status": "error", "error": error_msg} for email in data.emails],
-            "sent": 0
-        }
-    
-    print(f"Using {'SMTP' if use_smtp else 'Resend API'} for email sending")
-    
+
     # Extract group name from subject if possible
     group_name = data.subject.replace("Join ", "").strip()
     
     for email in data.emails:
         try:
-            if use_smtp:
-                # Use SMTP to send emails
-                print(f"Attempting to send email to {email} using SMTP ({smtp_server})...")
-                
-                # Create HTML email
-                html_body = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;">
-                    <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                        <div style="text-align: center; margin-bottom: 32px;">
-                            <h1 style="color: #8B5CF6; font-size: 28px; margin: 0;">You're Invited!</h1>
-                        </div>
-                        
-                        <h2 style="color: #18181b; font-size: 20px; margin-bottom: 16px;">Join "{group_name}"</h2>
-                        
-                        <p style="color: #3f3f46; line-height: 1.6; margin-bottom: 24px;">
-                            {data.body.replace(chr(10), '<br>')}
-                        </p>
-                        
-                        <div style="text-align: center; margin: 32px 0;">
-                            <a href="{data.invite_link}" 
-                               style="display: inline-block; background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                                Accept Invitation
-                            </a>
-                        </div>
-                        
-                        <p style="color: #71717a; font-size: 12px; margin-top: 24px; text-align: center;">
-                            Or copy and paste this link: <br>
-                            <a href="{data.invite_link}" style="color: #8B5CF6; word-break: break-all;">{data.invite_link}</a>
-                        </p>
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;">
+                <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <h1 style="color: #8B5CF6; font-size: 28px; margin: 0;">You're Invited!</h1>
                     </div>
-                </body>
-                </html>
-                """
-
-                # Create message
-                msg = MIMEMultipart('alternative')
-                msg['From'] = smtp_from_email
-                msg['To'] = email
-                msg['Subject'] = data.subject
-                
-                # Add both plain text and HTML versions
-                text_part = MIMEText(data.body, 'plain')
-                html_part = MIMEText(html_body, 'html')
-                
-                msg.attach(text_part)
-                msg.attach(html_part)
-                
-                # Send via SMTP
-                try:
-                    with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
-                        server.starttls()
-                        server.login(smtp_user, smtp_password)
-                        server.send_message(msg)
                     
-                    print(f"✓ Email sent successfully via SMTP to {email}")
-                    results.append({"email": email, "status": "success", "provider": "smtp"})
-                    continue
-                except Exception as e:
-                    error_msg = f"SMTP failed: {str(e)}"
-                    print(f"✗ {error_msg}")
-                    if not use_resend:
-                        results.append({"email": email, "status": "error", "error": error_msg})
-                        continue
-
-            if use_resend:
-                # Use Resend API to send emails (fallback or primary)
-                html_body = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;">
-                    <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                        <div style="text-align: center; margin-bottom: 32px;">
-                            <h1 style="color: #8B5CF6; font-size: 28px; margin: 0;">You're Invited!</h1>
-                        </div>
-                        
-                        <h2 style="color: #18181b; font-size: 20px; margin-bottom: 16px;">Join "{group_name}"</h2>
-                        
-                        <p style="color: #3f3f46; line-height: 1.6; margin-bottom: 24px;">
-                            {data.body.replace(chr(10), '<br>')}
-                        </p>
-                        
-                        <div style="text-align: center; margin: 32px 0;">
-                            <a href="{data.invite_link}" 
-                               style="display: inline-block; background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                                Accept Invitation
-                            </a>
-                        </div>
-                        
-                        <p style="color: #71717a; font-size: 12px; margin-top: 24px; text-align: center;">
-                            Or copy and paste this link: <br>
-                            <a href="{data.invite_link}" style="color: #8B5CF6; word-break: break-all;">{data.invite_link}</a>
-                        </p>
+                    <h2 style="color: #18181b; font-size: 20px; margin-bottom: 16px;">Join "{group_name}"</h2>
+                    
+                    <p style="color: #3f3f46; line-height: 1.6; margin-bottom: 24px;">
+                        {data.body.replace(chr(10), '<br>')}
+                    </p>
+                    
+                    <div style="text-align: center; margin: 32px 0;">
+                        <a href="{data.invite_link}" 
+                           style="display: inline-block; background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                            Accept Invitation
+                        </a>
                     </div>
-                </body>
-                </html>
-                """
-                resend_url = "https://api.resend.com/emails"
-                headers = {
-                    "Authorization": f"Bearer {resend_api_key}",
-                    "Content-Type": "application/json"
-                }
-                
-                # Use your verified domain email, or fallback to onboarding@resend.dev (test only)
-                # IMPORTANT: onboarding@resend.dev only works for test emails (delivered@resend.dev, etc.)
-                # To send to real emails, you must verify your domain in Resend dashboard
-                from_email = os.getenv("RESEND_FROM_EMAIL", "Onboarding <onboarding@resend.dev>")
-                
-                payload = {
-                    "from": from_email,
-                    "to": [email],
-                    "subject": data.subject,
-                    "html": html_body
-                }
-                
-                print(f"Attempting to send email to {email} using Resend API...")
-                print(f"API Key: {resend_api_key[:10]}...")
-                
-                response = requests.post(resend_url, json=payload, headers=headers, timeout=10)
-                
-                print(f"Resend API Response Status: {response.status_code}")
-                print(f"Resend API Response: {response.text}")
-                
-                if response.status_code == 200:
-                    response_data = response.json()
-                    print(f"✓ Email sent successfully to {email}")
-                    print(f"Email ID: {response_data.get('id', 'N/A')}")
-                    results.append({"email": email, "status": "success", "provider": "resend"})
-                elif response.status_code == 403:
-                    # 403 usually means domain not verified or using onboarding@resend.dev with real email
-                    try:
-                        error_data = response.json()
-                        error_msg = error_data.get('message', 'Domain not verified or using test email address')
-                    except:
-                        error_msg = "Domain verification required. onboarding@resend.dev can only send to test addresses."
                     
-                    print(f"✗ Failed to send email to {email}")
-                    print(f"Error (403): {error_msg}")
-                    print("NOTE: To send to real emails, verify your domain in Resend dashboard:")
-                    print("  1. Go to https://resend.com/domains")
-                    print("  2. Add and verify your domain")
-                    print("  3. Set RESEND_FROM_EMAIL environment variable (e.g., 'noreply@yourdomain.com')")
-                    results.append({"email": email, "status": "error", "error": error_msg})
-                else:
-                    try:
-                        error_data = response.json()
-                        error_msg = error_data.get('message', str(error_data))
-                    except:
-                        error_msg = response.text or f"HTTP {response.status_code}"
-                    
-                    print(f"✗ Failed to send email to {email}")
-                    print(f"Error: {error_msg}")
-                    results.append({"email": email, "status": "error", "error": error_msg})
+                    <p style="color: #71717a; font-size: 12px; margin-top: 24px; text-align: center;">
+                        Or copy and paste this link: <br>
+                        <a href="{data.invite_link}" style="color: #8B5CF6; word-break: break-all;">{data.invite_link}</a>
+                    </p>
+                </div>
+            </body>
+            </html>
+            """
+
+            result = send_email_message(email, data.subject, data.body, html_body)
+            if result.get("status") == "success":
+                results.append({"email": email, "status": "success", "provider": result.get("provider")})
             else:
-                # This shouldn't happen due to check at top, but just in case
-                error_msg = "No email service configured"
-                print(f"✗ {error_msg} for {email}")
-                results.append({"email": email, "status": "error", "error": error_msg})
-                    
+                results.append({"email": email, "status": "error", "error": result.get("error", "Email failed")})
         except Exception as e:
             print(f"Error sending email to {email}: {e}")
             import traceback
