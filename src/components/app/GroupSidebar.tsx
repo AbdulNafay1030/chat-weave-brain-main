@@ -207,8 +207,8 @@ const GroupSidebar = ({
                             <BellOff className="w-3.5 h-3.5 text-muted-foreground" />
                           )}
                           
-                          {/* Unread count badge (only show for muted chats) */}
-                          {muted && unreadCount > 0 && (
+                          {/* Unread count badge */}
+                          {unreadCount > 0 && (
                             <span className="min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
                               {unreadCount > 99 ? '99+' : unreadCount}
                             </span>

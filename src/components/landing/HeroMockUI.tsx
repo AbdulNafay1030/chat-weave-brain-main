@@ -177,7 +177,7 @@ const HeroMockUI = () => {
               animate={{ scale: step.active ? [1, 1.3, 1] : 1 }}
               transition={{ duration: 1, repeat: step.active ? Infinity : 0 }}
             />
-            <span className={`text-xs font-medium transition-colors duration-300 ${step.active ? 'text-foreground' : 'text-muted-foreground'}`}>
+            <span className="text-xs font-medium text-white">
               {step.label}
             </span>
           </div>

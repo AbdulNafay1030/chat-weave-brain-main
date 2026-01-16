@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { isSameDay, format } from 'date-fns';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search, Pencil, ChevronDown, Link, Sparkles } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search, Pencil, ChevronDown, Link, Sparkles, Menu } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
@@ -77,6 +77,7 @@ interface GroupChatProps {
   onAskAI?: (content: string, file?: { url: string; name: string; type: string; size: number } | null) => Promise<void>;
   isAILoading?: boolean;
   streamingAIContent?: string | null;
+  onOpenSidebar?: () => void;
 }
 
 const GroupChat = ({
@@ -104,7 +105,8 @@ const GroupChat = ({
   streamingAIContent,
   onReplyPrivately,
   initialReply,
-  onClearInitialReply
+  onClearInitialReply,
+  onOpenSidebar
 }: GroupChatProps & { initialReply?: Message | null; onClearInitialReply?: () => void }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -339,11 +341,24 @@ const GroupChat = ({
   return (
     <div className="flex-1 flex flex-col bg-background h-full font-sans">
       {/* Header - Clean Minimal */}
-      <div className="flex items-center justify-between px-6 py-3 bg-transparent">
-        <button className="flex items-center gap-2 text-foreground/80 hover:bg-secondary/50 px-2 py-1.5 rounded-lg transition-colors group">
-          <span className="text-lg font-medium text-foreground">{getHeaderName()}</span>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        </button>
+      <div className="flex items-center justify-between px-4 md:px-6 py-3 bg-transparent">
+        <div className="flex items-center gap-2">
+          {onOpenSidebar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden text-muted-foreground hover:text-foreground"
+              onClick={onOpenSidebar}
+              aria-label="Open sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
+          <button className="flex items-center gap-2 text-foreground/80 hover:bg-secondary/50 px-2 py-1.5 rounded-lg transition-colors group">
+            <span className="text-lg font-medium text-foreground">{getHeaderName()}</span>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
 
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={() => setIsMembersModalOpen(true)} className="text-muted-foreground hover:text-foreground" title="View Members">

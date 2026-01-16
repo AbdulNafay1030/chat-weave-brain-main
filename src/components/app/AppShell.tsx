@@ -20,6 +20,7 @@ import InviteGroupModal from './InviteGroupModal';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 const AppShell = () => {
   const { toast } = useToast();
@@ -28,6 +29,7 @@ const AppShell = () => {
   // Real database hooks
   const { groups: dbGroups, loading: groupsLoading, createGroup: dbCreateGroup, updateGroupName: dbUpdateGroupName, deleteGroup: dbDeleteGroup, refetchGroups } = useGroups();
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { messages: dbMessages, sendMessage: dbSendMessage, editMessage: dbEditMessage, deleteMessage: dbDeleteMessage, togglePin: dbTogglePin } = useMessages(activeGroupId);
   const { members: dbMembers } = useGroupMembers(activeGroupId);
 
@@ -231,6 +233,11 @@ const AppShell = () => {
     setActiveThreadId(null);
     // Mark messages as read when group is opened
     markAsRead(groupId);
+  };
+
+  const handleSelectGroupMobile = (groupId: string) => {
+    handleSelectGroup(groupId);
+    setIsMobileSidebarOpen(false);
   };
 
   const handleAcceptInvitation = async (token: string) => {
@@ -556,40 +563,82 @@ const AppShell = () => {
 
   return (
     <div className="h-screen flex bg-background overflow-hidden">
-      {/* Sidebar */}
-      <GroupSidebar
-        groups={groups}
-        currentUserId={currentUser.id}
-        activeGroupId={activeGroupId}
-        onSelectGroup={handleSelectGroup}
-        onCreateGroup={() => setIsGroupModalOpen(true)}
-        pendingInvitations={pendingInvitations}
-        onAcceptInvitation={handleAcceptInvitation}
-        invitationsLoading={invitationsLoading}
-        sideThreads={dbThreads}
-        activeThreadId={activeThreadId}
-        onSelectThread={(threadId) => {
-          setActiveThreadId(threadId);
-        }}
-        onDeleteThread={handleDeleteThread}
-        onDeleteGroup={handleDeleteGroup}
-        onRenameGroup={(id, name) => setRenameData({ id, type: 'group', name })}
-        onRenameThread={(id, name) => setRenameData({ id, type: 'thread', name })}
-        onInviteGroup={(groupId) => setInviteGroupId(groupId)}
-        onCreateThread={async () => {
-          if (dbCreateThread) {
-            try {
-              const newThread = await dbCreateThread("New Chat", []);
-              if (newThread) {
-                setActiveThreadId(newThread.id);
-                // setIsThreadOpen(true); // If this state exists, assume logic handles switching
+      {/* Sidebar (desktop) */}
+      <div className="hidden md:flex">
+        <GroupSidebar
+          groups={groups}
+          currentUserId={currentUser.id}
+          activeGroupId={activeGroupId}
+          onSelectGroup={handleSelectGroup}
+          onCreateGroup={() => setIsGroupModalOpen(true)}
+          pendingInvitations={pendingInvitations}
+          onAcceptInvitation={handleAcceptInvitation}
+          invitationsLoading={invitationsLoading}
+          sideThreads={dbThreads}
+          activeThreadId={activeThreadId}
+          onSelectThread={(threadId) => {
+            setActiveThreadId(threadId);
+          }}
+          onDeleteThread={handleDeleteThread}
+          onDeleteGroup={handleDeleteGroup}
+          onRenameGroup={(id, name) => setRenameData({ id, type: 'group', name })}
+          onRenameThread={(id, name) => setRenameData({ id, type: 'thread', name })}
+          onInviteGroup={(groupId) => setInviteGroupId(groupId)}
+          onCreateThread={async () => {
+            if (dbCreateThread) {
+              try {
+                const newThread = await dbCreateThread("New Chat", []);
+                if (newThread) {
+                  setActiveThreadId(newThread.id);
+                  // setIsThreadOpen(true); // If this state exists, assume logic handles switching
+                }
+              } catch (e) {
+                console.error("Failed to create thread", e);
               }
-            } catch (e) {
-              console.error("Failed to create thread", e);
             }
-          }
-        }}
-      />
+          }}
+        />
+      </div>
+
+      {/* Sidebar (mobile) */}
+      <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-[260px]">
+          <GroupSidebar
+            groups={groups}
+            currentUserId={currentUser.id}
+            activeGroupId={activeGroupId}
+            onSelectGroup={handleSelectGroupMobile}
+            onCreateGroup={() => setIsGroupModalOpen(true)}
+            pendingInvitations={pendingInvitations}
+            onAcceptInvitation={handleAcceptInvitation}
+            invitationsLoading={invitationsLoading}
+            sideThreads={dbThreads}
+            activeThreadId={activeThreadId}
+            onSelectThread={(threadId) => {
+              setActiveThreadId(threadId);
+              setIsMobileSidebarOpen(false);
+            }}
+            onDeleteThread={handleDeleteThread}
+            onDeleteGroup={handleDeleteGroup}
+            onRenameGroup={(id, name) => setRenameData({ id, type: 'group', name })}
+            onRenameThread={(id, name) => setRenameData({ id, type: 'thread', name })}
+            onInviteGroup={(groupId) => setInviteGroupId(groupId)}
+            onCreateThread={async () => {
+              if (dbCreateThread) {
+                try {
+                  const newThread = await dbCreateThread("New Chat", []);
+                  if (newThread) {
+                    setActiveThreadId(newThread.id);
+                    setIsMobileSidebarOpen(false);
+                  }
+                } catch (e) {
+                  console.error("Failed to create thread", e);
+                }
+              }
+            }}
+          />
+        </SheetContent>
+      </Sheet>
 
       {/* Main Chat */}
       <GroupChat
@@ -623,6 +672,7 @@ const AppShell = () => {
         onReplyPrivately={handleReplyPrivately}
         initialReply={pendingReplyMessage}
         onClearInitialReply={() => setPendingReplyMessage(null)}
+        onOpenSidebar={() => setIsMobileSidebarOpen(true)}
       />
 
       {/* Private Thread Panel */}

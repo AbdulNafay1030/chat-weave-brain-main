@@ -1443,8 +1443,22 @@ def accept_invitation(data: AcceptInviteRequest):
     if not group:
          conn.close()
          raise HTTPException(status_code=404, detail="Group not found")
-         
+
+    # Ensure group owner is always a member
+    cursor.execute("SELECT owner_id, name FROM groups WHERE id = ?", (group_id,))
+    owner_row = cursor.fetchone()
+    if owner_row and owner_row["owner_id"]:
+        cursor.execute("INSERT OR IGNORE INTO group_members VALUES (?, ?)", (group_id, owner_row["owner_id"]))
+
     cursor.execute("INSERT OR IGNORE INTO group_members VALUES (?, ?)", (group_id, data.user_id))
+
+    # System message: user joined the group
+    msg_id = str(uuid.uuid4())
+    created_at = datetime.now().isoformat()
+    cursor.execute(
+        "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (msg_id, group_id, data.user_id, "joined the group", created_at, False, None, False, None, None, None, None, None)
+    )
     conn.commit()
     conn.close()
     
