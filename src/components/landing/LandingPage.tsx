@@ -54,22 +54,22 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0b0b0e] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0b0b0e]/80 backdrop-blur border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <SidechatLogo size="sm" textClassName="text-white" />
-          <div className="hidden md:flex items-center gap-6 text-sm text-white/60">
-            <span className="hover:text-white transition-colors">Product</span>
-            <span className="hover:text-white transition-colors">Solutions</span>
-            <span className="hover:text-white transition-colors">Resources</span>
+          <SidechatLogo size="sm" />
+          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+            <span className="hover:text-foreground transition-colors">Product</span>
+            <span className="hover:text-foreground transition-colors">Solutions</span>
+            <span className="hover:text-foreground transition-colors">Resources</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
               size="sm"
               onClick={() => navigate('/auth')}
               aria-label="Sign in to Sidechat"
-              className="bg-white text-black hover:bg-white/90 rounded-full px-5"
+              className="rounded-full px-5"
             >
               Sign In
             </Button>
@@ -78,7 +78,7 @@ const LandingPage = () => {
               size="sm"
               onClick={() => navigate('/auth')}
               aria-label="Sign up for Sidechat"
-              className="bg-white text-black hover:bg-white/90 rounded-full px-5"
+              className="rounded-full px-5"
             >
               Request a demo
             </Button>
@@ -91,7 +91,7 @@ const LandingPage = () => {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center max-w-3xl mx-auto">
             <motion.h1
-              className="font-display text-5xl md:text-6xl font-medium text-white mb-6 leading-tight tracking-tight max-w-2xl mx-auto"
+              className="font-display text-5xl md:text-6xl font-medium text-foreground mb-6 leading-tight tracking-tight max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -101,7 +101,7 @@ const LandingPage = () => {
               for focused team work
             </motion.h1>
             <motion.p
-              className="text-lg text-white/60 mb-8 max-w-xl mx-auto"
+              className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
@@ -111,14 +111,14 @@ const LandingPage = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
                 size="lg"
-                className="bg-white text-black hover:bg-white/90 h-11 px-8 rounded-full"
+                className="h-11 px-8 rounded-full"
                 onClick={() => navigate('/auth')}
               >
                 Request a demo
               </Button>
               <Button
                 size="lg"
-                className="bg-white text-black hover:bg-white/90 h-11 px-8 rounded-full"
+                className="h-11 px-8 rounded-full"
                 onClick={() => navigate('/auth')}
               >
                 Sign in
@@ -136,13 +136,13 @@ const LandingPage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-6 bg-[#111217]">
+      <section className="py-16 px-6 bg-secondary/20">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-3 gap-8">
             {stats.map((stat) => (
-              <div key={stat.label} className="bg-[#0f1116] rounded-2xl p-6 border border-white/5">
-                <div className="text-4xl font-display font-medium text-white tracking-tight">{stat.value}</div>
-                <p className="text-sm text-white/60 mt-3">{stat.label}</p>
+              <div key={stat.label} className="bg-card rounded-2xl p-6 border border-border">
+                <div className="text-4xl font-display font-medium text-foreground tracking-tight">{stat.value}</div>
+                <p className="text-sm text-muted-foreground mt-3">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -153,18 +153,18 @@ const LandingPage = () => {
       <section className="py-16 px-6">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-4 tracking-tight">
+            <h2 className="font-display text-3xl md:text-4xl font-medium text-foreground mb-4 tracking-tight">
               Built for real collaboration
             </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Move from thinking to action without losing the thread.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {usage.map((item) => (
-              <div key={item.title} className="bg-[#10131a] rounded-2xl p-8 border border-white/5">
-                <h3 className="font-display text-xl font-medium text-white mb-3">{item.title}</h3>
-                <p className="text-white/60">{item.description}</p>
+              <div key={item.title} className="bg-card rounded-2xl p-8 border border-border">
+                <h3 className="font-display text-xl font-medium text-foreground mb-3">{item.title}</h3>
+                <p className="text-muted-foreground">{item.description}</p>
               </div>
             ))}
           </div>
@@ -172,29 +172,29 @@ const LandingPage = () => {
       </section>
 
       {/* Platform Section */}
-      <section className="py-16 px-6 bg-[#0f1116]">
+      <section className="py-16 px-6 bg-secondary/30">
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col lg:flex-row items-start gap-12">
             <div className="lg:w-1/2">
-              <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-4 tracking-tight">
+              <h2 className="font-display text-3xl md:text-4xl font-medium text-foreground mb-4 tracking-tight">
                 Your team’s collaboration, structured and calm
               </h2>
-              <p className="text-lg text-white/60 mb-8">
+              <p className="text-lg text-muted-foreground mb-8">
                 Sidechat keeps discussions organized while making AI available only when it adds value.
               </p>
-              <Button variant="hero" onClick={() => navigate('/auth')} className="bg-white text-black hover:bg-white/90">
+              <Button variant="hero" onClick={() => navigate('/auth')}>
                 Start free
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
             <div className="lg:w-1/2 grid gap-6">
               {platform.map((item) => (
-                <div key={item.title} className="bg-[#0b0e14] rounded-2xl p-6 border border-white/5">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4">
-                    <item.icon className="w-5 h-5 text-white" />
+                <div key={item.title} className="bg-card rounded-2xl p-6 border border-border">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                    <item.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-display text-lg font-medium text-white mb-2">{item.title}</h3>
-                  <p className="text-white/60">{item.description}</p>
+                  <h3 className="font-display text-lg font-medium text-foreground mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground">{item.description}</p>
                 </div>
               ))}
             </div>
@@ -205,16 +205,16 @@ const LandingPage = () => {
       {/* Industries Section */}
       <section className="py-16 px-6">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center gap-3 text-white text-sm font-medium mb-4">
+          <div className="flex items-center gap-3 text-primary text-sm font-medium mb-4">
             <Building2 className="w-4 h-4" />
             <span>Teams who use Sidechat</span>
           </div>
-          <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-6 tracking-tight">
+          <h2 className="font-display text-3xl md:text-4xl font-medium text-foreground mb-6 tracking-tight">
             Reimagine how your teams work together
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {industries.map((item) => (
-              <div key={item} className="border border-white/10 rounded-xl px-4 py-3 text-sm text-white/60">
+              <div key={item} className="border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground">
                 {item}
               </div>
             ))}
@@ -223,22 +223,22 @@ const LandingPage = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 px-6 bg-[#111217]">
+      <section className="py-16 px-6 bg-secondary/20">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-4 tracking-tight">
+            <h2 className="font-display text-3xl md:text-4xl font-medium text-foreground mb-4 tracking-tight">
               Teams ship faster with Sidechat
             </h2>
-            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Real stories from teams that needed clarity and speed.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((item) => (
-              <div key={item.name} className="bg-[#0f1116] border border-white/5 rounded-2xl p-6">
-                <p className="text-sm text-white/70 mb-6">“{item.quote}”</p>
-                <div className="text-sm font-medium text-white">{item.name}</div>
-                <div className="text-xs text-white/50">{item.title}</div>
+              <div key={item.name} className="bg-card border border-border rounded-2xl p-6">
+                <p className="text-sm text-muted-foreground mb-6">“{item.quote}”</p>
+                <div className="text-sm font-medium text-foreground">{item.name}</div>
+                <div className="text-xs text-muted-foreground">{item.title}</div>
               </div>
             ))}
           </div>
@@ -249,23 +249,23 @@ const LandingPage = () => {
       <section className="py-16 px-6">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            className="bg-[#111217] rounded-3xl p-12 md:p-16 text-center relative overflow-hidden border border-white/5"
+            className="bg-hero rounded-3xl p-12 md:p-16 text-center relative overflow-hidden"
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="font-display text-3xl md:text-4xl font-medium text-white mb-4 tracking-tight">
+            <h2 className="font-display text-3xl md:text-4xl font-medium text-primary-foreground mb-4 tracking-tight">
               Start focused conversations today
             </h2>
-            <p className="text-lg text-white/60 mb-8 max-w-xl mx-auto">
+            <p className="text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
               Sidechat helps teams align faster without the noise.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
                 size="lg"
-                className="bg-white text-black hover:bg-white/90 h-12 px-8 rounded-full"
+                className="bg-card text-foreground hover:bg-card/90 h-12 px-8 rounded-full"
                 onClick={() => navigate('/auth')}
               >
                 Request a demo
@@ -274,17 +274,17 @@ const LandingPage = () => {
             </div>
 
             {/* Decorative */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/20 rounded-full blur-3xl" />
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-10 px-6 border-t border-white/10">
+      <footer className="py-10 px-6 border-t border-border">
         <div className="container mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
-          <SidechatLogo size="xs" textClassName="text-white" />
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-white/60">
+          <SidechatLogo size="xs" />
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
             <span>Privacy</span>
             <span>Terms</span>
             <span>Support</span>

@@ -64,17 +64,17 @@ const ResetPassword = () => {
     }
   };
 
-  const inputClass = "bg-[#0f1116] border-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/20";
+  const inputClass = "bg-white border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring";
 
   return (
-    <div className="min-h-screen bg-[#0b0b0e] text-white flex items-center justify-center p-8">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <SidechatLogo size="md" textClassName="text-white" />
-          <h2 className="font-display text-2xl font-medium text-white mt-4">
+          <SidechatLogo size="md" />
+          <h2 className="font-display text-2xl font-medium text-foreground mt-4">
             Reset your password
           </h2>
-          <p className="text-white/60">
+          <p className="text-muted-foreground">
             Enter a new password to regain access.
           </p>
         </div>
@@ -85,7 +85,7 @@ const ResetPassword = () => {
               New Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
@@ -96,7 +96,7 @@ const ResetPassword = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -121,7 +121,7 @@ const ResetPassword = () => {
             />
           </div>
 
-          <Button type="submit" variant="hero" className="w-full h-12 bg-white text-black hover:bg-white/90" disabled={isSubmitting}>
+          <Button type="submit" variant="hero" className="w-full h-12" disabled={isSubmitting}>
             {isSubmitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (

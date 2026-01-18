@@ -174,28 +174,28 @@ const Auth = () => {
     }
   };
 
-  const inputClass = "bg-[#0f1116] border-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/20";
+  const inputClass = "bg-white border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring";
 
   return (
-    <div className="min-h-screen bg-[#0b0b0e] text-white flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0f1116] relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-hero relative overflow-hidden">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <SidechatLogo size="xl" textClassName="text-white" />
-            <p className="text-lg text-white/60 max-w-md">
+            <SidechatLogo size="xl" textClassName="text-primary-foreground" />
+            <p className="text-lg text-primary-foreground/80 max-w-md">
               Private brainstorm threads for group chats. Collaborate smarter with your team.
             </p>
           </motion.div>
         </div>
 
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-sidechat-cyan/20 rounded-full blur-3xl" />
       </div>
 
       {/* Right Panel - Auth Form */}
@@ -209,7 +209,7 @@ const Auth = () => {
           {/* Back to home */}
           <Button
             variant="ghost"
-            className="mb-8 gap-2 text-white/70 hover:text-white hover:bg-white/5"
+            className="mb-8 gap-2"
             onClick={() => navigate('/')}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -221,10 +221,10 @@ const Auth = () => {
           </div>
 
           <div className="mb-8">
-            <h2 className="font-display text-2xl font-medium text-white mb-2">
+            <h2 className="font-display text-2xl font-medium text-foreground mb-2">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h2>
-            <p className="text-white/60">
+            <p className="text-muted-foreground">
               {isSignUp
                 ? 'Start collaborating with your team today'
                 : 'Sign in to continue to Sidechat'}
@@ -275,10 +275,10 @@ const Auth = () => {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#0b0b0e] px-2 text-white/50">Or continue with</span>
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
@@ -310,7 +310,7 @@ const Auth = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="email"
                   placeholder="you@example.com"
@@ -320,7 +320,7 @@ const Auth = () => {
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-red-400 mt-1">{errors.email}</p>
+                <p className="text-sm text-destructive mt-1">{errors.email}</p>
               )}
             </div>
 
@@ -329,7 +329,7 @@ const Auth = () => {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
@@ -340,7 +340,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -351,13 +351,13 @@ const Auth = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-400 mt-1">{errors.password}</p>
+                <p className="text-sm text-destructive mt-1">{errors.password}</p>
               )}
               {!isSignUp && (
                 <div className="flex justify-end mt-1">
                   <button
                     type="button"
-                    className="text-sm text-white/70 hover:text-white"
+                    className="text-sm text-primary hover:underline"
                     onClick={() => {
                       setForgotEmail(email);
                       setIsForgotOpen(true);
@@ -415,7 +415,7 @@ const Auth = () => {
             </DialogContent>
           </Dialog>
 
-          <p className="mt-6 text-center text-sm text-white/60">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               type="button"
@@ -428,7 +428,7 @@ const Auth = () => {
                 setFullName('');
                 setShowPassword(false);
               }}
-              className="text-white font-medium hover:underline"
+              className="text-primary font-medium hover:underline"
             >
               {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
