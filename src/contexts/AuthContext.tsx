@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Profile } from '@/types/sidechat';
+import { User, Profile } from '@/types/sortus';
 import { api } from '@/services/api';
 
 interface AuthContextType {
@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const initAuth = async () => {
       // Check for stored session
-      const storedUser = localStorage.getItem('sidechat_user');
-      const storedToken = localStorage.getItem('sidechat_token');
+      const storedUser = localStorage.getItem('sortus_user');
+      const storedToken = localStorage.getItem('sortus_token');
 
       if (storedUser && storedToken) {
         try {
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
-            localStorage.setItem('sidechat_user', JSON.stringify(freshUser));
+            localStorage.setItem('sortus_user', JSON.stringify(freshUser));
           } catch (apiError) {
             console.warn("Failed to refresh user from backend, using stored data", apiError);
             // Fallback to stored data if backend is down
@@ -72,8 +72,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
         } catch (e) {
           console.error("Failed to parse stored user", e);
-          localStorage.removeItem('sidechat_user');
-          localStorage.removeItem('sidechat_token');
+          localStorage.removeItem('sortus_user');
+          localStorage.removeItem('sortus_token');
         }
       }
       setLoading(false);
@@ -94,8 +94,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
-      localStorage.setItem('sidechat_user', JSON.stringify(newUser));
-      localStorage.setItem('sidechat_token', 'real-token');
+      localStorage.setItem('sortus_user', JSON.stringify(newUser));
+      localStorage.setItem('sortus_token', 'real-token');
       return { error: null };
     } catch (e) {
       return { error: e as Error };
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signIn = async (email: string, password: string) => {
     try {
       const { user: apiUser } = await api.login(email, password);
-      
+
       // Fetch fresh user data from backend to ensure we have the latest avatar
       try {
         const freshUser = await api.getUser(apiUser.id);
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
-        localStorage.setItem('sidechat_user', JSON.stringify(freshUser));
+        localStorage.setItem('sortus_user', JSON.stringify(freshUser));
       } catch (fetchError) {
         // Fallback to apiUser if getUser fails
         console.warn("Failed to fetch fresh user data, using login response", fetchError);
@@ -132,10 +132,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
-        localStorage.setItem('sidechat_user', JSON.stringify(apiUser));
+        localStorage.setItem('sortus_user', JSON.stringify(apiUser));
       }
-      
-      localStorage.setItem('sidechat_token', 'real-token');
+
+      localStorage.setItem('sortus_token', 'real-token');
       return { error: null };
     } catch (e) {
       return { error: e as Error };
@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
-          localStorage.setItem('sidechat_user', JSON.stringify(freshUser));
+          localStorage.setItem('sortus_user', JSON.stringify(freshUser));
         } catch (fetchError) {
           // Fallback to apiUser if getUser fails
           console.warn("Failed to fetch fresh user data, using login response", fetchError);
@@ -189,10 +189,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
-          localStorage.setItem('sidechat_user', JSON.stringify(apiUser));
+          localStorage.setItem('sortus_user', JSON.stringify(apiUser));
         }
-        
-        localStorage.setItem('sidechat_token', token || 'google-token');
+
+        localStorage.setItem('sortus_token', token || 'google-token');
         return { error: null };
       }
       return { error: new Error("No Google Data") };
@@ -213,8 +213,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     setUser(null);
     setProfile(null);
-    localStorage.removeItem('sidechat_user');
-    localStorage.removeItem('sidechat_token');
+    localStorage.removeItem('sortus_user');
+    localStorage.removeItem('sortus_token');
   };
 
   const updateProfile = async (updates: { full_name?: string; avatar_url?: string }) => {
@@ -223,7 +223,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const updatedUser = { ...user, name: updates.full_name || user.name, avatar: updates.avatar_url || user.avatar };
       setUser(updatedUser);
       setProfile((prev) => prev ? { ...prev, full_name: updatedUser.name, avatar_url: updatedUser.avatar } : null);
-      localStorage.setItem('sidechat_user', JSON.stringify(updatedUser));
+      localStorage.setItem('sortus_user', JSON.stringify(updatedUser));
 
       // 2. Persist to Backend
       try {
@@ -252,7 +252,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
-        localStorage.setItem('sidechat_user', JSON.stringify(freshUser));
+        localStorage.setItem('sortus_user', JSON.stringify(freshUser));
       } catch (error) {
         console.error("Failed to refresh profile", error);
       }

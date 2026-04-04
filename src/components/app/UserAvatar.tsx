@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import { Sparkles } from 'lucide-react';
 
 interface UserAvatarProps {
@@ -30,7 +30,7 @@ const UserAvatar = ({ user, isAI, size = 'md', showStatus = false, isOnline }: U
     return (
       <div className={cn(
         sizeClasses[size],
-        "rounded-full bg-sidechat-purple flex items-center justify-center flex-shrink-0"
+        "rounded-full bg-sortus-purple flex items-center justify-center flex-shrink-0"
       )}>
         <Sparkles className={cn(
           size === 'sm' ? 'w-3 h-3' : size === 'md' ? 'w-4 h-4' : 'w-5 h-5',
@@ -51,9 +51,9 @@ const UserAvatar = ({ user, isAI, size = 'md', showStatus = false, isOnline }: U
         "rounded-full bg-primary/20 flex items-center justify-center font-medium text-primary overflow-hidden"
       )}>
         {user?.avatar ? (
-          <img 
-            src={user.avatar} 
-            alt={user.name} 
+          <img
+            src={user.avatar}
+            alt={user.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -61,7 +61,7 @@ const UserAvatar = ({ user, isAI, size = 'md', showStatus = false, isOnline }: U
         )}
       </div>
       {showStatus && (
-        <div 
+        <div
           className={cn(
             "absolute rounded-full border-2 border-card",
             statusSizeClasses[size],

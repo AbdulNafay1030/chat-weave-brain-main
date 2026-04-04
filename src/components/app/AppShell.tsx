@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { User, Group, Message } from '@/types/sidechat';
+import { User, Group, Message } from '@/types/sortus';
 import { useAuth } from '@/contexts/AuthContext';
 // import { supabase } from '@/integrations/supabase/client'; // REMOVED
 import { api } from '@/services/api';
@@ -402,7 +402,7 @@ const AppShell = () => {
         fileSize: undefined
       };
 
-      // Add to local state immediately so user sees "Sidechat AI" appear
+      // Add to local state immediately so user sees "Organize AI" appear
       // Note: We need a way to update this state. Since 'groupMessages' comes from useGroups hook,
       // we might need to manipulate the hook's state or just rely on the final save.
       // Ideally, pass a callback or use a local state overlay.

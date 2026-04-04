@@ -3,7 +3,7 @@ import { Search, X, Hash, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Message, User } from '@/types/sidechat';
+import { Message, User } from '@/types/sortus';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -16,13 +16,13 @@ interface MessageSearchProps {
   scrollToMessage?: (messageId: string) => void;
 }
 
-const MessageSearch = ({ 
-  messages, 
-  users, 
-  onClose, 
+const MessageSearch = ({
+  messages,
+  users,
+  onClose,
   onMessageClick,
   groupName,
-  scrollToMessage 
+  scrollToMessage
 }: MessageSearchProps) => {
   const [query, setQuery] = useState('');
 
@@ -36,7 +36,7 @@ const MessageSearch = ({
 
   const filteredMessages = useMemo(() => {
     if (!query.trim()) return [];
-    
+
     const lowerQuery = query.toLowerCase();
     return messages
       .filter(m => m.content.toLowerCase().includes(lowerQuery))
@@ -46,10 +46,10 @@ const MessageSearch = ({
 
   const highlightMatch = (text: string, query: string) => {
     if (!query.trim()) return text;
-    
+
     const parts = text.split(new RegExp(`(${query})`, 'gi'));
-    return parts.map((part, i) => 
-      part.toLowerCase() === query.toLowerCase() 
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase()
         ? <mark key={i} className="bg-primary/30 text-foreground rounded px-0.5">{part}</mark>
         : part
     );
@@ -100,7 +100,7 @@ const MessageSearch = ({
               {filteredMessages.map((message) => {
                 const user = getUserById(message.userId);
                 const isThread = !!message.threadId;
-                
+
                 return (
                   <button
                     key={message.id}

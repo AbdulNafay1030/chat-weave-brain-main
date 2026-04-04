@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
-import { Message, User } from '@/types/sidechat';
+import { Message, User } from '@/types/sortus';
 import UserAvatar from './UserAvatar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';

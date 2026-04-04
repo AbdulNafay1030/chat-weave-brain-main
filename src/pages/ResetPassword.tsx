@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Loader2, Lock } from 'lucide-react';
 import { api } from '@/services/api';
-import SidechatLogo from '@/components/SidechatLogo';
+import { OrganizeLogo } from '@/components/OrganizeLogo';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <SidechatLogo size="md" />
+          <OrganizeLogo size="md" />
           <h2 className="font-display text-2xl font-medium text-foreground mt-4">
             Reset your password
           </h2>

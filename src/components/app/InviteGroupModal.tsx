@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Copy, Check, Search, UserPlus, X, Send, Mail } from 'lucide-react';
 import { api } from '@/services/api';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -61,11 +61,11 @@ const InviteGroupModal = ({ isOpen, onClose, groupId, userId, groupName, onInvit
             setSearchResults([]);
             return;
         }
-        
+
         setSearching(true);
         try {
             const apiUsers = await api.getUsers(query);
-            // Map API User to sidechat User format
+            // Map API User to sortus User format
             const users: User[] = apiUsers.map((u: any) => ({
                 id: u.id,
                 name: u.name,
@@ -157,7 +157,7 @@ const InviteGroupModal = ({ isOpen, onClose, groupId, userId, groupName, onInvit
                 try {
                     // Create or get existing DM
                     const dm = await api.createDM(currentUser.id, targetUser.id);
-                    
+
                     // Send invitation message
                     await api.sendMessage(inviteMessage, currentUser.id, dm.id, false);
                     successCount++;
@@ -205,13 +205,13 @@ const InviteGroupModal = ({ isOpen, onClose, groupId, userId, groupName, onInvit
 
     const sendEmailInvitation = async (emails: string[]) => {
         if (!link || emails.length === 0) return;
-        
+
         const subject = `Join ${groupName || 'the group'}`;
         const body = `Hey!\n\nI'd like to invite you to join "${groupName || 'the group'}" on our platform.\n\nClick here to join: ${link}\n\nLooking forward to chatting with you!`;
-        
+
         try {
             const result = await api.sendInvitationEmail(emails, subject, body, link);
-            
+
             if (result.sent > 0) {
                 toast({
                     title: "Emails sent!",
@@ -219,16 +219,16 @@ const InviteGroupModal = ({ isOpen, onClose, groupId, userId, groupName, onInvit
                     duration: 15000, // 15 seconds - stays visible longer
                 });
             }
-            
+
             // Show errors if any
             const errors = result.results.filter(r => r.status === 'error');
             if (errors.length > 0) {
                 const errorMessages = errors.map(e => e.error || 'Unknown error').join(', ');
                 const isDomainError = errorMessages.includes('403') || errorMessages.toLowerCase().includes('domain');
-                
+
                 toast({
                     title: "Email sending failed",
-                    description: isDomainError 
+                    description: isDomainError
                         ? "Domain verification required. Please verify your domain in Resend dashboard to send real emails."
                         : `Failed to send ${errors.length} email(s): ${errorMessages}`,
                     variant: "destructive",

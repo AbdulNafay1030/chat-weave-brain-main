@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +22,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+import stripe
 
 # Load environment variables from .env file
 load_dotenv()
@@ -49,6 +50,14 @@ if RESEND_API_KEY:
     print(f"INFO: Resend API Key configured (starts with {RESEND_API_KEY[:8]}...)")
 else:
     print("WARNING: Resend API Key not set - emails will not be sent")
+
+# Stripe Configuration
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
+    print(f"INFO: Stripe configured (key starts with {STRIPE_SECRET_KEY[:12]}...)")
+else:
+    print("WARNING: Stripe not configured - payment processing will not work")
 
 app = FastAPI()
 
@@ -195,6 +204,21 @@ def init_db():
     )
     ''')
 
+    # Waitlist Entries
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS waitlist_entries (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        tier TEXT NOT NULL,
+        stripe_payment_id TEXT,
+        stripe_customer_id TEXT,
+        payment_status TEXT,
+        amount INTEGER,
+        created_at TEXT NOT NULL,
+        position INTEGER
+    )
+    ''')
+
     # Seed Initial Data if empty
     cursor.execute("SELECT count(*) FROM users")
     if cursor.fetchone()[0] == 0:
@@ -203,7 +227,7 @@ def init_db():
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", 
                        ("user-1", "You", "you@example.com", None, "online", None))
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", 
-                       ("ai-agent", "ChatGPT", "ai@sidechat.com", None, "online", None))
+                       ("ai-agent", "Organize AI", "ai@organize.ai", None, "online", None))
         
         # Group (id, name, created_at, owner_id, type)
         group_id = "group-1"
@@ -600,7 +624,7 @@ def forgot_password(email: str = Form(...)):
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     reset_link = f"{frontend_url}/reset-password?token={token}"
 
-    subject = "Reset your Sidechat password"
+    subject = "Reset your Organize AI password"
     text_body = f"Use this link to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour."
     html_body = f"""
     <p>Use this link to reset your password:</p>
@@ -1042,8 +1066,8 @@ class SendEmailRequest(BaseModel):
 
 class EmailTestRequest(BaseModel):
     to_email: str
-    subject: Optional[str] = "Sidechat SMTP Test"
-    body: Optional[str] = "This is a test email from Sidechat."
+    subject: Optional[str] = "Organize AI SMTP Test"
+    body: Optional[str] = "This is a test email from Organize AI."
 
 def get_gmail_tokens():
     conn = get_db()
@@ -1270,9 +1294,9 @@ def send_test_email(data: EmailTestRequest):
             raw_message = MIMEMultipart('alternative')
             raw_message['To'] = data.to_email
             raw_message['From'] = gmail_sender
-            raw_message['Subject'] = data.subject or "Sidechat Gmail Test"
-            raw_message.attach(MIMEText(data.body or "This is a test email from Sidechat.", 'plain'))
-            raw_message.attach(MIMEText(f"<p>{(data.body or 'This is a test email from Sidechat.').replace(chr(10), '<br>')}</p>", 'html'))
+            raw_message['Subject'] = data.subject or "Organize AI Gmail Test"
+            raw_message.attach(MIMEText(data.body or "This is a test email from Organize AI.", 'plain'))
+            raw_message.attach(MIMEText(f"<p>{(data.body or 'This is a test email from Organize AI.').replace(chr(10), '<br>')}</p>", 'html'))
 
             encoded_message = base64.urlsafe_b64encode(raw_message.as_bytes()).decode()
             gmail_url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
@@ -1298,10 +1322,10 @@ def send_test_email(data: EmailTestRequest):
         msg = MIMEMultipart('alternative')
         msg['From'] = smtp_from_email
         msg['To'] = data.to_email
-        msg['Subject'] = data.subject or "Sidechat SMTP Test"
+        msg['Subject'] = data.subject or "Organize AI SMTP Test"
 
-        text_part = MIMEText(data.body or "This is a test email from Sidechat.", 'plain')
-        html_part = MIMEText(f"<p>{(data.body or 'This is a test email from Sidechat.').replace(chr(10), '<br>')}</p>", 'html')
+        text_part = MIMEText(data.body or "This is a test email from Organize AI.", 'plain')
+        html_part = MIMEText(f"<p>{(data.body or 'This is a test email from Organize AI.').replace(chr(10), '<br>')}</p>", 'html')
         msg.attach(text_part)
         msg.attach(html_part)
 
@@ -1345,8 +1369,8 @@ def send_test_email(data: EmailTestRequest):
     payload = {
         "from": from_email,
         "to": [data.to_email],
-        "subject": data.subject or "Sidechat SMTP Test",
-        "html": f"<p>{(data.body or 'This is a test email from Sidechat.').replace(chr(10), '<br>')}</p>",
+        "subject": data.subject or "Organize AI SMTP Test",
+        "html": f"<p>{(data.body or 'This is a test email from Organize AI.').replace(chr(10), '<br>')}</p>",
     }
 
     try:
@@ -1735,6 +1759,201 @@ When you have access to web search results or URLs, always cite your sources cle
             yield f"Error calling OpenAI: {str(e)}"
 
     return StreamingResponse(event_generator(), media_type="text/plain")
+
+
+# --- Waitlist Endpoints ---
+
+class WaitlistJoinRequest(BaseModel):
+    email: str
+    tier: str  # 'free' or 'priority'
+
+class CheckoutSessionRequest(BaseModel):
+    email: str
+
+@app.post("/api/waitlist/join")
+def join_waitlist(data: WaitlistJoinRequest):
+    """Join the free waitlist"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if email already exists
+        cursor.execute("SELECT * FROM waitlist_entries WHERE email = ?", (data.email,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            conn.close()
+            return {"status": "already_exists", "message": "Email already on waitlist"}
+        
+        # Calculate position
+        cursor.execute("SELECT COUNT(*) FROM waitlist_entries WHERE tier = 'free'")
+        free_count = cursor.fetchone()[0]
+        position = free_count + 1
+        
+        # Insert new entry
+        entry_id = str(uuid.uuid4())
+        created_at = datetime.now().isoformat()
+        
+        cursor.execute(
+            "INSERT INTO waitlist_entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (entry_id, data.email, data.tier, None, None, None, None, created_at, position)
+        )
+        conn.commit()
+        conn.close()
+        
+        return {
+            "status": "success",
+            "tier": data.tier,
+            "position": position,
+            "message": f"You're #{position} on the waitlist"
+        }
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/waitlist/create-checkout")
+def create_checkout_session(data: CheckoutSessionRequest):
+    """Create a Stripe checkout session for priority access"""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if email already exists
+        cursor.execute("SELECT * FROM waitlist_entries WHERE email = ?", (data.email,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            conn.close()
+            return {"status": "already_exists", "message": "Email already on waitlist"}
+        
+        # Create Stripe checkout session
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:8081")
+        
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Priority Early Access',
+                        'description': 'Skip the waitlist and get guaranteed early access to Organize AI',
+                    },
+                    'unit_amount': 2900,  # $29.00
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=f'{frontend_url}/?payment=success&email={data.email}',
+            cancel_url=f'{frontend_url}/?payment=cancelled',
+            customer_email=data.email,
+            metadata={
+                'email': data.email,
+                'tier': 'priority'
+            }
+        )
+        
+        conn.close()
+        return {"checkout_url": session.url, "session_id": session.id}
+        
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/stripe/webhook")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    payload = await request.body()
+    sig_header = request.headers.get('stripe-signature')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET", "")
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        
+        email = session['metadata']['email']
+        tier = session['metadata']['tier']
+        payment_id = session['payment_intent']
+        customer_id = session['customer']
+        amount = session['amount_total']
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        try:
+            # Add to waitlist with priority
+            entry_id = str(uuid.uuid4())
+            created_at = datetime.now().isoformat()
+            
+            cursor.execute(
+                "INSERT INTO waitlist_entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (entry_id, email, tier, payment_id, customer_id, 'completed', amount, created_at, 0)
+            )
+            conn.commit()
+            conn.close()
+            
+        except Exception as e:
+            conn.close()
+            print(f"Error processing webhook: {str(e)}")
+    
+    return {"status": "success"}
+
+@app.get("/api/waitlist/status/{email}")
+def get_waitlist_status(email: str):
+    """Get waitlist status for an email"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM waitlist_entries WHERE email = ?", (email,))
+    entry = cursor.fetchone()
+    
+    if not entry:
+        conn.close()
+        return {"status": "not_found"}
+    
+    entry_dict = dict(entry)
+    conn.close()
+    
+    return {
+        "status": "found",
+        "tier": entry_dict['tier'],
+        "position": entry_dict['position'],
+        "payment_status": entry_dict.get('payment_status'),
+        "created_at": entry_dict['created_at']
+    }
+
+@app.get("/api/waitlist/count")
+def get_waitlist_count():
+    """Get total waitlist count"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM waitlist_entries WHERE tier = 'free'")
+    free_count = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM waitlist_entries WHERE tier = 'priority'")
+    priority_count = cursor.fetchone()[0]
+    
+    conn.close()
+    
+    return {
+        "free": free_count,
+        "priority": priority_count,
+        "total": free_count + priority_count
+    }
 
 
 

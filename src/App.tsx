@@ -18,7 +18,7 @@ import ProtectedRoute from "./components/app/ProtectedRoute";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="light" storageKey="sidechat-ui-theme-forced-light">
+  <ThemeProvider defaultTheme="light" storageKey="sortus-ui-theme-forced-light">
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>

@@ -189,11 +189,11 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
-      
+
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
         let interimTranscript = '';
-        
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
@@ -202,12 +202,12 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
             interimTranscript += transcript;
           }
         }
-        
+
         if (finalTranscript) {
           setInput(prev => prev + finalTranscript);
         }
       };
-      
+
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
@@ -219,14 +219,14 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
           });
         }
       };
-      
+
       recognition.onend = () => {
         setIsListening(false);
       };
-      
+
       recognitionRef.current = recognition;
     }
-    
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
@@ -243,7 +243,7 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
       });
       return;
     }
-    
+
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -276,7 +276,7 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
       content: userMessage,
       timestamp: new Date(),
     };
-    
+
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
@@ -319,7 +319,7 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         textBuffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
@@ -339,9 +339,9 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantContent += content;
-              setMessages(prev => 
-                prev.map(m => 
-                  m.id === assistantId 
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
                     ? { ...m, content: assistantContent }
                     : m
                 )
@@ -368,9 +368,9 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantContent += content;
-              setMessages(prev => 
-                prev.map(m => 
-                  m.id === assistantId 
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
                     ? { ...m, content: assistantContent }
                     : m
                 )
@@ -440,7 +440,7 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">Sidechat AI</h2>
+                <h2 className="font-semibold text-foreground">Organize AI</h2>
                 <p className="text-xs text-muted-foreground">Your AI assistant</p>
               </div>
             </div>

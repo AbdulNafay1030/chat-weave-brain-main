@@ -10,14 +10,14 @@ interface ChatMessage {
   content: string;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { messages, context } = await req.json();
-    
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       console.error('LOVABLE_API_KEY is not configured');
@@ -26,7 +26,7 @@ serve(async (req) => {
 
     console.log('Processing AI chat request, messages:', messages?.length);
 
-    const systemPrompt = `You are Sidechat AI — a helpful, friendly, and knowledgeable assistant integrated into a team collaboration app.
+    const systemPrompt = `You are Organize AI — a helpful, friendly, and knowledgeable assistant integrated into a team collaboration app.
 
 You can help with:
 - Answering questions on any topic
@@ -69,7 +69,7 @@ ${context ? `\n\nContext from team conversations:\n${context}` : ''}`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI Gateway error:', response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
@@ -82,7 +82,7 @@ ${context ? `\n\nContext from team conversations:\n${context}` : ''}`;
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       throw new Error(`AI service error: ${response.status}`);
     }
 

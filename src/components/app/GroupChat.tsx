@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { isSameDay, format } from 'date-fns';
-import { Group, Message, User, PrivateThread } from '@/types/sidechat';
+import { Group, Message, User, PrivateThread } from '@/types/sortus';
 import { Button } from '@/components/ui/button';
 import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search, Pencil, ChevronDown, Link, Sparkles, Menu } from 'lucide-react';
 import ChatMessage from './ChatMessage';
@@ -170,12 +170,12 @@ const GroupChat = ({
   const isNearBottom = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return true;
-    
+
     const threshold = 150; // pixels from bottom
     const scrollTop = container.scrollTop;
     const scrollHeight = container.scrollHeight;
     const clientHeight = container.clientHeight;
-    
+
     return (scrollHeight - scrollTop - clientHeight) < threshold;
   }, []);
 
@@ -288,7 +288,7 @@ const GroupChat = ({
       });
       return;
     }
-    
+
     setIsSummarizing(true);
     setSummary(null);
 
@@ -306,14 +306,14 @@ const GroupChat = ({
 
       // Call AI to summarize
       const prompt = `Summarize the following group chat messages into key discussion points. Format the summary as numbered points (1., 2., 3., etc.). Do not include sources or citations. Keep it concise but informative.`;
-      
+
       const response = await api.askAI(prompt, context);
-      
+
       // Handle undefined or null response
       if (!response || !response.content) {
         throw new Error('Invalid response from AI service');
       }
-      
+
       // Remove sources section if present (backend may add it)
       let summaryContent = response.content || '';
       // Remove "Sources:" section at the end
@@ -324,7 +324,7 @@ const GroupChat = ({
       // Also check for other source patterns
       summaryContent = summaryContent.replace(/\n\n\*\*Sources?:\*\*[\s\S]*$/i, '');
       summaryContent = summaryContent.replace(/\n\nSources?:[\s\S]*$/i, '');
-      
+
       setSummary(summaryContent);
     } catch (error) {
       console.error('Error summarizing:', error);
@@ -382,7 +382,7 @@ const GroupChat = ({
               // Handle numbered points (1., 2., 3., etc.)
               const trimmedLine = line.trim();
               const isNumberedPoint = /^\d+\.\s/.test(trimmedLine);
-              
+
               return (
                 <p key={idx} className={isNumberedPoint ? 'pl-0' : trimmedLine.startsWith('•') || trimmedLine.startsWith('-') ? 'pl-2' : ''}>
                   {line || '\u00A0'}
@@ -436,7 +436,7 @@ const GroupChat = ({
                 // Then by date (oldest first)
                 return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
               });
-              
+
               return sortedMessages.map((message, index) => {
                 const replyToMessage = message.replyToId ? messageMap.get(message.replyToId) : null;
                 const messageDate = new Date(message.createdAt);
@@ -444,32 +444,32 @@ const GroupChat = ({
                 const previousDate = previousMessage ? new Date(previousMessage.createdAt) : null;
                 const showDateSeparator = !previousDate || !isSameDay(messageDate, previousDate);
 
-              return (
-                <div key={message.id}>
-                  {showDateSeparator && <DateSeparator date={messageDate} />}
-                  <div data-message-id={message.id}>
-                    <ChatMessage
-                      message={{ ...message, is_pinned: message.isPinned }}
-                      user={getUserById(message.userId)}
-                      isOwn={message.userId === currentUserId}
-                      isUserOnline={isOnline(message.userId)}
-                      onEdit={onEditMessage}
-                      onDelete={onDeleteMessage}
-                      onReplyPrivately={onReplyPrivately}
-                      onTogglePin={onTogglePin}
-                      onReply={handleReply}
-                      onForward={onForwardMessage ? handleForward : undefined}
-                      reactions={getReactionGroups(message.id)}
-                      onToggleReaction={handleToggleReaction}
-                      readBy={getReadBy(message.id)}
-                      users={users}
-                      totalMembers={group.members.length}
-                      replyToMessage={replyToMessage}
-                    />
+                return (
+                  <div key={message.id}>
+                    {showDateSeparator && <DateSeparator date={messageDate} />}
+                    <div data-message-id={message.id}>
+                      <ChatMessage
+                        message={{ ...message, is_pinned: message.isPinned }}
+                        user={getUserById(message.userId)}
+                        isOwn={message.userId === currentUserId}
+                        isUserOnline={isOnline(message.userId)}
+                        onEdit={onEditMessage}
+                        onDelete={onDeleteMessage}
+                        onReplyPrivately={onReplyPrivately}
+                        onTogglePin={onTogglePin}
+                        onReply={handleReply}
+                        onForward={onForwardMessage ? handleForward : undefined}
+                        reactions={getReactionGroups(message.id)}
+                        onToggleReaction={handleToggleReaction}
+                        readBy={getReadBy(message.id)}
+                        users={users}
+                        totalMembers={group.members.length}
+                        replyToMessage={replyToMessage}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            });
+                );
+              });
             })()}
 
             {/* Streaming AI Message */}
@@ -485,7 +485,7 @@ const GroupChat = ({
                     isAI: true,
                     isPinned: false
                   }}
-                  user={{ id: 'ai-agent', name: 'Sidechat AI', email: 'ai@sidechat.com', status: 'online' }}
+                  user={{ id: 'ai-agent', name: 'Organize AI', email: 'ai@organize.ai', status: 'online' }}
                   isOwn={false}
                   isUserOnline={true}
                   users={users}

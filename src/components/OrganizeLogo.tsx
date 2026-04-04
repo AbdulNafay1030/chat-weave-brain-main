@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-interface SidechatLogoProps {
+interface OrganizeLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
   className?: string;
@@ -15,17 +15,17 @@ const sizeMap = {
   xl: { container: 'w-16 h-16', icon: 'w-8 h-8', text: 'text-4xl' },
 };
 
-const SidechatLogo = ({ 
-  size = 'sm', 
-  showText = true, 
+export const OrganizeLogo = ({
+  size = 'sm',
+  showText = true,
   className,
-  textClassName 
-}: SidechatLogoProps) => {
+  textClassName
+}: OrganizeLogoProps) => {
   const { container, icon, text } = sizeMap[size];
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      {/* Logo Icon - Two overlapping speech bubbles representing side conversations */}
+      {/* Logo Icon - Keeping the bubble concept for now but could be updated */}
       <div className={cn(
         container,
         'rounded-xl bg-accent-gradient flex items-center justify-center relative'
@@ -36,19 +36,19 @@ const SidechatLogo = ({
           className={icon}
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Back bubble (thread/side conversation) */}
+          {/* Back bubble */}
           <path
             d="M18 4H10C8.9 4 8 4.9 8 6V12C8 13.1 8.9 14 10 14H14L17 17V14H18C19.1 14 20 13.1 20 12V6C20 4.9 19.1 4 18 4Z"
             fill="currentColor"
             className="text-primary-foreground/60"
           />
-          {/* Front bubble (main conversation) */}
+          {/* Front bubble */}
           <path
             d="M14 8H6C4.9 8 4 8.9 4 10V16C4 17.1 4.9 18 6 18H7V21L10 18H14C15.1 18 16 17.1 16 16V10C16 8.9 15.1 8 14 8Z"
             fill="currentColor"
             className="text-primary-foreground"
           />
-          {/* AI sparkle dot */}
+          {/* Sparkle dot */}
           <circle
             cx="17"
             cy="7"
@@ -64,11 +64,11 @@ const SidechatLogo = ({
           text,
           textClassName
         )}>
-          Sidechat
+          Organize AI
         </span>
       )}
     </div>
   );
 };
 
-export default SidechatLogo;
+export default OrganizeLogo;

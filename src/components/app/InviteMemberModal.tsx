@@ -67,7 +67,7 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
         (host.endsWith('.lovable.app') && host.includes('--'));
 
       // Use the actual published production URL
-      const productionUrl = 'https://sidechatai.vercel.app';
+      const productionUrl = 'https://sortusai.vercel.app';
       const appUrl = isPreview ? productionUrl : window.location.origin;
       const link = `${appUrl}/invite/${invitationToken}`;
       setInviteLink(link);

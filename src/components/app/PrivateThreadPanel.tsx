@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { PrivateThread, ThreadMessage, User } from '@/types/sidechat';
+import { PrivateThread, ThreadMessage, User } from '@/types/sortus';
 import { Button } from '@/components/ui/button';
 import { X, Lock, Sparkles, Loader2, MoreVertical, Pencil, Trash2, Check, Pin, PinOff, Reply } from 'lucide-react';
 import ChatInput from './ChatInput';
@@ -93,17 +93,17 @@ const PrivateThreadPanel = ({
   }, [messages, currentUserId, markAsRead]);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Check if user is near the bottom of the chat
   const isNearBottom = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return true;
-    
+
     const threshold = 150; // pixels from bottom
     const scrollTop = container.scrollTop;
     const scrollHeight = container.scrollHeight;
     const clientHeight = container.clientHeight;
-    
+
     return (scrollHeight - scrollTop - clientHeight) < threshold;
   }, []);
 
@@ -131,7 +131,7 @@ const PrivateThreadPanel = ({
       setEditingMessageId(null);
       return;
     }
-    
+
     setIsLoading(true);
     const success = await onEditMessage(editingMessageId, editContent.trim());
     setIsLoading(false);
@@ -147,7 +147,7 @@ const PrivateThreadPanel = ({
 
   const handleDelete = async () => {
     if (!onDeleteMessage || !messageToDelete) return;
-    
+
     setIsLoading(true);
     await onDeleteMessage(messageToDelete);
     setIsLoading(false);
@@ -188,19 +188,19 @@ const PrivateThreadPanel = ({
             <X className="w-4 h-4" />
           </Button>
         </div>
-        
+
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Lock className="w-3 h-3" />
           <span>Human-only brainstorm</span>
           <span className="text-border">•</span>
           <span>{thread.members.length} members</span>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2 mt-2">
           {thread.members.map((member) => {
             const memberOnline = isOnline(member.id);
             const lastSeenText = getLastSeen(member.id, memberOnline);
-            
+
             return (
               <div key={member.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary/50">
                 <UserAvatar user={member} size="sm" showStatus isOnline={memberOnline} />
@@ -245,7 +245,7 @@ const PrivateThreadPanel = ({
             const isPinned = (message as any).is_pinned;
             const replyToMessage = message.replyTo;
             const replyUser = replyToMessage ? getUserById(replyToMessage.userId) : null;
-            
+
             return (
               <motion.div
                 key={message.id}
@@ -276,7 +276,7 @@ const PrivateThreadPanel = ({
                       <span className="line-clamp-1">{replyToMessage.content}</span>
                     </div>
                   )}
-                  
+
                   {isEditing ? (
                     <div className="mt-1 space-y-2">
                       <Textarea
@@ -314,7 +314,7 @@ const PrivateThreadPanel = ({
                           {message.content}
                         </p>
                       )}
-                      
+
                       {/* File Attachment */}
                       {message.fileUrl && (
                         <div className="mt-2">
@@ -330,9 +330,9 @@ const PrivateThreadPanel = ({
                       {/* Read Receipts for own messages */}
                       {isOwn && (
                         <div className="mt-1">
-                          <ReadReceipts 
-                            readBy={getReadBy(message.id)} 
-                            users={users} 
+                          <ReadReceipts
+                            readBy={getReadBy(message.id)}
+                            users={users}
                             isOwn={isOwn}
                             totalMembers={thread.members.length}
                           />
@@ -341,7 +341,7 @@ const PrivateThreadPanel = ({
                     </>
                   )}
                 </div>
-                
+
                 {/* Edit/Delete/Reply Menu */}
                 {!isEditing && (onEditMessage || onDeleteMessage || onTogglePin) && (
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -378,7 +378,7 @@ const PrivateThreadPanel = ({
                           </DropdownMenuItem>
                         )}
                         {isOwn && onDeleteMessage && (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => setMessageToDelete(message.id)}
                             className="text-destructive focus:text-destructive"
                           >
@@ -447,8 +447,8 @@ const PrivateThreadPanel = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
+            <AlertDialogAction
+              onClick={handleDelete}
               disabled={isLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

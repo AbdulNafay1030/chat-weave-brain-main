@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Check, Users } from 'lucide-react';
@@ -34,7 +34,7 @@ const CreateGroupModal = ({
 
   const toggleMember = (member: User) => {
     if (member.id === currentUser.id) return; // Can't remove self
-    
+
     setSelectedMembers((prev) =>
       prev.some((m) => m.id === member.id)
         ? prev.filter((m) => m.id !== member.id)

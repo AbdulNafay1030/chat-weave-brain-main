@@ -5,7 +5,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import UserAvatar from './UserAvatar';
 
 interface MemberListModalProps {

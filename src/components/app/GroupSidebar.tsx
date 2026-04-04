@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Group } from '@/types/sidechat';
+import { Group } from '@/types/sortus';
 import { cn } from '@/lib/utils';
 import {
   Hash, Plus, Minus, ChevronDown, ChevronRight,
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import UserMenu from './UserMenu';
-import SidechatLogo from '@/components/SidechatLogo';
+import { OrganizeLogo } from '@/components/OrganizeLogo';
 import PendingInvitationsCard from './PendingInvitationsCard';
 import { PendingInvitation } from '@/hooks/usePendingInvitations';
 import { useToast } from '@/hooks/use-toast';
@@ -77,7 +77,7 @@ const GroupSidebar = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isMuted, toggleMute } = useMuteChat();
-  
+
   // Get all group IDs for unread count calculation
   const allGroupIds = useMemo(() => groups.map(g => g.id), [groups]);
   const { getUnreadCount } = useUnreadCount(allGroupIds);
@@ -114,7 +114,7 @@ const GroupSidebar = ({
           }}
           aria-label="Go to landing page"
         >
-          <SidechatLogo size="sm" />
+          <OrganizeLogo size="sm" />
         </button>
 
         <div className="px-1">
@@ -206,7 +206,7 @@ const GroupSidebar = ({
                           {muted && (
                             <BellOff className="w-3.5 h-3.5 text-muted-foreground" />
                           )}
-                          
+
                           {/* Unread count badge */}
                           {unreadCount > 0 && (
                             <span className="min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
@@ -376,7 +376,7 @@ const GroupSidebar = ({
                           {muted && (
                             <BellOff className="w-3.5 h-3.5 text-muted-foreground" />
                           )}
-                          
+
                           {/* Unread count badge (only show for muted chats) */}
                           {muted && unreadCount > 0 && (
                             <span className="min-w-[18px] h-[18px] px-1.5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import SidechatLogo from '@/components/SidechatLogo';
+import { OrganizeLogo } from '@/components/OrganizeLogo';
 import { Loader2, CheckCircle, XCircle, LogIn } from 'lucide-react';
 
 const AcceptInvite = () => {
@@ -77,9 +77,9 @@ const AcceptInvite = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <SidechatLogo className="w-12 h-12" />
+              <OrganizeLogo className="w-12 h-12" />
             </div>
-            <CardTitle>Join Sidechat</CardTitle>
+            <CardTitle>Join Organize AI</CardTitle>
             <CardDescription>
               Sign in or create an account to accept this invitation
             </CardDescription>
@@ -121,7 +121,7 @@ const AcceptInvite = () => {
         <CardContent>
           {status === 'success' && (
             <Button onClick={handleGoToApp} className="w-full">
-              Open Sidechat
+              Open Organize AI
             </Button>
           )}
           {status === 'error' && (

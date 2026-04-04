@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/popover';
 import ReplyPreview from './ReplyPreview';
 import MentionInput from './MentionInput';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import { useFileUpload } from '@/hooks/useFileUpload';
 
 interface ReplyTo {

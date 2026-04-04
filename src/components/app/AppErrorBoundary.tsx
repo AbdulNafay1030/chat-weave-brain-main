@@ -51,7 +51,7 @@ export default class AppErrorBoundary extends React.Component<Props, State> {
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(
-                    `Sidechat error: ${message}\n\n${this.state.error?.stack || ''}`
+                    `Organize AI error: ${message}\n\n${this.state.error?.stack || ''}`
                   );
                 } catch {
                   // ignore

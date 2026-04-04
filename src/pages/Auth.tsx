@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import SidechatLogo from '@/components/SidechatLogo';
+import { OrganizeLogo } from '@/components/OrganizeLogo';
 
 const emailSchema = z.string().email('Please enter a valid email');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -98,7 +98,7 @@ const Auth = () => {
         } else {
           toast({
             title: 'Account created!',
-            description: 'Welcome to Sidechat!',
+            description: 'Welcome to Organize AI!',
           });
           // Let the useEffect handle redirect (it checks for pending invite)
         }
@@ -186,7 +186,7 @@ const Auth = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <SidechatLogo size="xl" textClassName="text-primary-foreground" />
+            <OrganizeLogo size="xl" textClassName="text-primary-foreground" />
             <p className="text-lg text-primary-foreground/80 max-w-md">
               Private brainstorm threads for group chats. Collaborate smarter with your team.
             </p>
@@ -195,7 +195,7 @@ const Auth = () => {
 
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-sidechat-cyan/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-sortus-cyan/20 rounded-full blur-3xl" />
       </div>
 
       {/* Right Panel - Auth Form */}
@@ -217,7 +217,7 @@ const Auth = () => {
           </Button>
 
           <div className="lg:hidden mb-8">
-            <SidechatLogo size="md" />
+            <OrganizeLogo size="md" />
           </div>
 
           <div className="mb-8">
@@ -227,7 +227,7 @@ const Auth = () => {
             <p className="text-muted-foreground">
               {isSignUp
                 ? 'Start collaborating with your team today'
-                : 'Sign in to continue to Sidechat'}
+                : 'Sign in to continue to Organize AI'}
             </p>
           </div>
 
@@ -296,7 +296,7 @@ const Auth = () => {
                     placeholder="John Doe"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                  className={`pl-10 ${inputClass}`}
+                    className={`pl-10 ${inputClass}`}
                   />
                 </div>
                 {errors.name && (

@@ -5,16 +5,16 @@ import { MessageSquare, Users, Sparkles, Send, Lock } from 'lucide-react';
 // Typewriter component for AI response
 const TypewriterText = ({ text, isActive, speed = 30 }: { text: string; isActive: boolean; speed?: number }) => {
   const [displayedText, setDisplayedText] = useState('');
-  
+
   useEffect(() => {
     if (!isActive) {
       setDisplayedText('');
       return;
     }
-    
+
     let index = 0;
     setDisplayedText('');
-    
+
     const interval = setInterval(() => {
       if (index < text.length) {
         setDisplayedText(text.slice(0, index + 1));
@@ -23,19 +23,19 @@ const TypewriterText = ({ text, isActive, speed = 30 }: { text: string; isActive
         clearInterval(interval);
       }
     }, speed);
-    
+
     return () => clearInterval(interval);
   }, [text, isActive, speed]);
-  
+
   // Parse text into lines for proper formatting
   const lines = useMemo(() => {
     return displayedText.split('\n');
   }, [displayedText]);
-  
+
   return (
     <div className="text-sm text-foreground space-y-1">
       {lines.map((line, i) => (
-        <p 
+        <p
           key={i}
           className={line.startsWith('•') ? 'pl-2 text-muted-foreground' : ''}
         >
@@ -56,7 +56,7 @@ const TypewriterText = ({ text, isActive, speed = 30 }: { text: string; isActive
 // Team members with distinct colors and avatar images
 const teamMembers = [
   { name: 'Sarah', color: 'hsl(var(--primary))', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face' },
-  { name: 'Alex', color: 'hsl(var(--sidechat-purple))', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
+  { name: 'Alex', color: 'hsl(var(--sortus-purple))', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
   { name: 'Jordan', color: 'hsl(var(--accent))', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' },
   { name: 'Emma', color: 'hsl(340 70% 55%)', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face' },
 ];
@@ -109,14 +109,14 @@ const HeroMockUI = () => {
           }, 1200);
         }
       }
-      
+
       // Phase 2: Transition to private thread
       else if (phase === 'transition') {
         timeout = setTimeout(() => {
           setPhase('privateChat');
         }, PHASE_DURATIONS.transition);
       }
-      
+
       // Phase 3: Private chat messages
       else if (phase === 'privateChat') {
         if (privateMessages < threadMessages.length) {
@@ -129,21 +129,21 @@ const HeroMockUI = () => {
           }, 800);
         }
       }
-      
+
       // Phase 4: Send to AI
       else if (phase === 'sendToAI') {
         timeout = setTimeout(() => {
           setPhase('aiResponse');
         }, PHASE_DURATIONS.sendToAI);
       }
-      
+
       // Phase 5: AI Response
       else if (phase === 'aiResponse') {
         timeout = setTimeout(() => {
           setPhase('reset');
         }, PHASE_DURATIONS.aiResponse);
       }
-      
+
       // Reset and loop
       else if (phase === 'reset') {
         timeout = setTimeout(() => {
@@ -198,7 +198,7 @@ const HeroMockUI = () => {
             <div className="w-3 h-3 rounded-full bg-green-400/60" />
           </div>
           <div className="flex-1 text-center">
-            <span className="text-xs text-muted-foreground font-medium">Sidechat — Product Team</span>
+            <span className="text-xs text-muted-foreground font-medium">Organize AI — Product Team</span>
           </div>
           {/* Team member avatars */}
           <div className="flex -space-x-2">
@@ -213,8 +213,8 @@ const HeroMockUI = () => {
                 }}
                 transition={{ duration: 0.4 }}
               >
-                <img 
-                  src={member.avatar} 
+                <img
+                  src={member.avatar}
                   alt={member.name}
                   className="w-full h-full object-cover"
                 />
@@ -225,17 +225,17 @@ const HeroMockUI = () => {
 
         <div className="flex h-[480px]">
           {/* Sidebar */}
-          <div className="w-14 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
+          <div className="w-14 bg-sortus-navy flex flex-col items-center py-4 gap-3">
             <div className="w-9 h-9 rounded-xl bg-accent-gradient flex items-center justify-center">
-              {/* Mini Sidechat logo icon */}
+              {/* Mini Organize AI logo icon */}
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
                 <path d="M18 4H10C8.9 4 8 4.9 8 6V12C8 13.1 8.9 14 10 14H14L17 17V14H18C19.1 14 20 13.1 20 12V6C20 4.9 19.1 4 18 4Z" fill="currentColor" className="text-primary-foreground/60" />
                 <path d="M14 8H6C4.9 8 4 8.9 4 10V16C4 17.1 4.9 18 6 18H7V21L10 18H14C15.1 18 16 17.1 16 16V10C16 8.9 15.1 8 14 8Z" fill="currentColor" className="text-primary-foreground" />
               </svg>
             </div>
-            <motion.div 
+            <motion.div
               className="w-9 h-9 rounded-xl flex items-center justify-center"
-              animate={{ 
+              animate={{
                 backgroundColor: showPrivatePanel ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--muted) / 0.1)'
               }}
               transition={{ duration: 0.3 }}
@@ -248,9 +248,9 @@ const HeroMockUI = () => {
           </div>
 
           {/* Main Chat */}
-          <motion.div 
+          <motion.div
             className="flex-1 flex flex-col bg-background relative"
-            animate={{ 
+            animate={{
               opacity: showPrivatePanel && !focusOnAIResponse ? 0.6 : 1,
               filter: showPrivatePanel && !focusOnAIResponse ? 'blur(1px)' : 'blur(0px)'
             }}
@@ -268,30 +268,30 @@ const HeroMockUI = () => {
               {groupMessages.slice(0, visibleMessages).map((msg, i) => {
                 const member = teamMembers.find(m => m.name === msg.user);
                 const isPrivateMember = ['Sarah', 'Alex'].includes(msg.user);
-                
+
                 return (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 10 }}
-                    animate={{ 
+                    animate={{
                       opacity: highlightPrivateMembers && !isPrivateMember ? 0.4 : 1,
-                      y: 0 
+                      y: 0
                     }}
                     transition={{ duration: 0.3 }}
                     className="flex gap-2"
                   >
-                    <motion.div 
+                    <motion.div
                       className="w-8 h-8 rounded-full overflow-hidden shrink-0"
                       animate={{
                         scale: highlightPrivateMembers && isPrivateMember ? [1, 1.1, 1] : 1,
-                        boxShadow: highlightPrivateMembers && isPrivateMember 
-                          ? '0 0 12px hsl(var(--primary) / 0.5)' 
+                        boxShadow: highlightPrivateMembers && isPrivateMember
+                          ? '0 0 12px hsl(var(--primary) / 0.5)'
                           : '0 0 0px transparent'
                       }}
                       transition={{ duration: 0.6, repeat: highlightPrivateMembers && isPrivateMember ? Infinity : 0 }}
                     >
-                      <img 
-                        src={member?.avatar} 
+                      <img
+                        src={member?.avatar}
                         alt={msg.user}
                         className="w-full h-full object-cover"
                       />
@@ -324,9 +324,9 @@ const HeroMockUI = () => {
                           AI Response
                         </span>
                       </div>
-                      <TypewriterText 
-                        text={aiResponse} 
-                        isActive={phase === 'aiResponse'} 
+                      <TypewriterText
+                        text={aiResponse}
+                        isActive={phase === 'aiResponse'}
                         speed={25}
                       />
                     </div>
@@ -349,8 +349,8 @@ const HeroMockUI = () => {
             {showPrivatePanel && (
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ 
-                  width: 220, 
+                animate={{
+                  width: 220,
                   opacity: focusOnAIResponse ? 0.5 : 1,
                   filter: focusOnAIResponse ? 'blur(0.5px)' : 'blur(0px)'
                 }}
@@ -360,7 +360,7 @@ const HeroMockUI = () => {
               >
                 <div className="p-3 border-b border-primary/20 bg-primary/5">
                   <div className="flex items-center gap-2">
-                    <motion.div 
+                    <motion.div
                       className="w-2 h-2 rounded-full bg-primary"
                       animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
@@ -376,8 +376,8 @@ const HeroMockUI = () => {
                           key={name}
                           className="w-5 h-5 rounded-full overflow-hidden"
                         >
-                          <img 
-                            src={member?.avatar} 
+                          <img
+                            src={member?.avatar}
                             alt={name}
                             className="w-full h-full object-cover"
                           />
@@ -400,8 +400,8 @@ const HeroMockUI = () => {
                         className="flex gap-2"
                       >
                         <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
-                          <img 
-                            src={member?.avatar} 
+                          <img
+                            src={member?.avatar}
                             alt={msg.user}
                             className="w-full h-full object-cover"
                           />
@@ -419,9 +419,9 @@ const HeroMockUI = () => {
                     {(phase === 'sendToAI' || phase === 'aiResponse') && (
                       <motion.button
                         initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                        animate={{ 
-                          opacity: 1, 
-                          scale: 1, 
+                        animate={{
+                          opacity: 1,
+                          scale: 1,
                           y: 0,
                         }}
                         exit={{ opacity: 0, scale: 0.9 }}
@@ -441,12 +441,12 @@ const HeroMockUI = () => {
       </motion.div>
 
       {/* Decorative glow */}
-      <motion.div 
+      <motion.div
         className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-3xl"
         animate={{
           background: focusOnAIResponse
             ? 'radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)'
-            : showPrivatePanel 
+            : showPrivatePanel
               ? 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)'
               : 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)'
         }}

@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import { ReadReceipt } from '@/hooks/useReadReceipts';
 
 interface ReadReceiptsProps {
@@ -19,7 +19,7 @@ interface ReadReceiptsProps {
 const ReadReceipts = ({ readBy, users, isOwn, totalMembers, senderId }: ReadReceiptsProps) => {
   // Filter out the sender from read receipts
   const readByOthers = readBy.filter((receipt) => receipt.user_id !== senderId);
-  
+
   const readByUsers = readByOthers
     .map((receipt) => users.find((u) => u.id === receipt.user_id))
     .filter(Boolean) as User[];
@@ -30,7 +30,7 @@ const ReadReceipts = ({ readBy, users, isOwn, totalMembers, senderId }: ReadRece
   if (readCount === 0) {
     // Only show "Sent" indicator for own messages
     if (!isOwn) return null;
-    
+
     return (
       <TooltipProvider>
         <Tooltip>

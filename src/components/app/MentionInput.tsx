@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent, forwardRef, useImperativeHandle } from 'react';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 import { cn } from '@/lib/utils';
 import UserAvatar from './UserAvatar';
 
@@ -40,7 +40,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
     insertMention: (user: User) => insertMention(user),
   }));
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(mentionSearch.toLowerCase())
   ).slice(0, 5);
 
@@ -56,7 +56,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
   const checkForMention = (text: string, cursorPos: number) => {
     const textBeforeCursor = text.slice(0, cursorPos);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-    
+
     if (lastAtIndex === -1) {
       setShowMentions(false);
       return;
@@ -68,7 +68,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
     }
 
     const searchText = textBeforeCursor.slice(lastAtIndex + 1);
-    
+
     if (searchText.includes(' ')) {
       setShowMentions(false);
       return;
@@ -82,14 +82,14 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
   const insertMention = (user: User) => {
     const textBeforeCursor = value.slice(0, cursorPosition);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-    
+
     const beforeMention = value.slice(0, lastAtIndex);
     const afterMention = value.slice(cursorPosition);
-    
+
     const newValue = `${beforeMention}@${user.name} ${afterMention}`;
     onChange(newValue);
     setShowMentions(false);
-    
+
     setTimeout(() => {
       if (textareaRef.current) {
         const newPos = lastAtIndex + user.name.length + 2;
@@ -102,10 +102,10 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData('text');
-    
+
     // Replace newlines with spaces to prevent multi-line expansion
     const cleanedText = pastedText.replace(/\n/g, ' ').replace(/\r/g, ' ');
-    
+
     // Insert at cursor position
     const textarea = e.currentTarget;
     const start = textarea.selectionStart || 0;
@@ -113,10 +113,10 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
     const currentValue = value;
     const newValue = currentValue.slice(0, start) + cleanedText + currentValue.slice(end);
     const newCursorPos = start + cleanedText.length;
-    
+
     onChange(newValue);
     setCursorPosition(newCursorPos);
-    
+
     // Set cursor position after state update
     setTimeout(() => {
       if (textareaRef.current) {
@@ -162,7 +162,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
         return;
       }
     }
-    
+
     // Send message on Enter (without Shift)
     if (e.key === 'Enter' && !e.shiftKey && !showMentions) {
       e.preventDefault();
@@ -205,10 +205,10 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
           className
         )}
       />
-      
+
       {/* Mentions Dropdown */}
       {showMentions && filteredUsers.length > 0 && (
-        <div 
+        <div
           className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50"
           onClick={(e) => e.stopPropagation()}
         >

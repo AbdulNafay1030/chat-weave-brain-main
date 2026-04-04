@@ -1,6 +1,6 @@
 import { X, Reply } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { User } from '@/types/sidechat';
+import { User } from '@/types/sortus';
 
 interface ReplyPreviewProps {
   replyTo: {

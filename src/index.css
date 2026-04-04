@@ -36,15 +36,15 @@
 
     --radius: 0.75rem;
 
-    /* Custom Sidechat tokens - Purple to Cyan gradient theme */
-    --sidechat-navy: 240 30% 12%;
-    --sidechat-slate: 240 20% 25%;
-    --sidechat-purple: 263 70% 58%;
-    --sidechat-purple-light: 263 70% 95%;
-    --sidechat-cyan: 188 94% 43%;
-    --sidechat-cyan-light: 188 94% 90%;
-    --sidechat-violet: 270 70% 55%;
-    --sidechat-glow: 263 70% 58%;
+    /* Custom Organize AI tokens - Purple to Cyan gradient theme */
+    --sortus-navy: 240 30% 12%;
+    --sortus-slate: 240 20% 25%;
+    --sortus-purple: 263 70% 58%;
+    --sortus-purple-light: 263 70% 95%;
+    --sortus-cyan: 188 94% 43%;
+    --sortus-cyan-light: 188 94% 90%;
+    --sortus-violet: 270 70% 55%;
+    --sortus-glow: 263 70% 58%;
 
     /* Gradients - Purple to Cyan like the logo */
     --gradient-hero: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(188 94% 43%) 100%);
@@ -120,7 +120,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     font-weight: 500;
     letter-spacing: -0.02em;
@@ -169,8 +174,15 @@
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   .animate-pulse-soft {
@@ -178,8 +190,144 @@
   }
 
   @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Gradient animation for backgrounds */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* Fade in up animation for scroll reveals */
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out forwards;
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Shimmer effect for gradient text */
+  .animate-shimmer {
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 0% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  /* Card hover lift effect */
+  .card-hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.25);
+  }
+
+  /* Magnetic button hover effect */
+  .magnetic-hover {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .magnetic-hover:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px -8px hsl(var(--primary) / 0.4);
+  }
+
+  .magnetic-hover:active {
+    transform: scale(0.98);
+  }
+
+  /* Stagger animation delays */
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+
+  .stagger-5 {
+    animation-delay: 0.5s;
+  }
+
+  /* Animated gradient background */
+  .bg-animated-gradient {
+    background: linear-gradient(135deg,
+        hsl(263 70% 58%) 0%,
+        hsl(270 70% 55%) 25%,
+        hsl(188 94% 43%) 50%,
+        hsl(263 70% 58%) 100%);
+    background-size: 200% 200%;
+  }
+
+  /* Glow effect on hover */
+  .hover-glow {
+    transition: all 0.3s ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4),
+      0 0 60px hsl(var(--primary) / 0.2);
+  }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
